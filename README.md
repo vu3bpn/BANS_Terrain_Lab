@@ -4,14 +4,14 @@ A platform for applying AI to solve geographical problems.
 
 ## Hackathon Objectives
 
-1.  Derive a DTM from point cloud data.\
-2.  Estimate natural surface water flow patterns.\
+1.  Derive a DTM from point cloud data.
+2.  Estimate natural surface water flow patterns.
 3.  Design drainage plans for the region using the derived DTM.
 
 ## Deliverables
 
-1.  Automated AI/ML pipelines to derive a DTM from point cloud data.\
-2.  Drainage network provided as Shapefiles.\
+1.  Automated AI/ML pipelines to derive a DTM from point cloud data.
+2.  Drainage network provided as Shapefiles.
 3.  Documentation and final report.
 
 ## Folder Structure
