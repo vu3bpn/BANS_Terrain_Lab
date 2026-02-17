@@ -22,9 +22,12 @@ A platform for applying AI to solve geographical problems.
     ./src/DTM        -- Code for DTM generation
     ./src/flows      -- Code for natural flow estimation
     ./src/drain      -- Code for optimal drainage design
+    ./src/misc       -- Miscellaneous scripts and utilities
     ./data           -- All data files
     ./data/input     -- Input datasets
     ./data/output    -- Output datasets
+    ./data/models    -- Models and trained weights
+    ./data/vectors   -- Vector data (Shapefiles, etc.)   
 
 All code directories will contain a `config.py` file with the necessary
 configurations to control algorithm parameters.
