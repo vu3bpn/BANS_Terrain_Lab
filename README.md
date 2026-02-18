@@ -30,5 +30,5 @@ A platform for applying AI to solve geographical problems.
     ./data/models    -- Models and trained weights
     ./data/vectors   -- Vector data (Shapefiles, etc.)   
 
-All code will contain a `config.py` file with the necessary
-configurations to control algorithm parameters.
+Code will contain a `config.py` file with the necessary configurations 
+to control algorithm parameters.
