@@ -26,7 +26,7 @@ keystore_ini_dict = {"Downloaded":[]}
 #%%
 def log(message):
     print(message)
-    open(logfile,"a").write(f"{time.ctime()}  {message}")
+    open(logfile,"a").write(f"{time.ctime()}  {message}\n")
 
 #%% make required dirs
 required_dirs = [
