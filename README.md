@@ -32,3 +32,9 @@ A platform for applying AI to solve geographical problems.
 
 Code will contain a `config.py` file with the necessary configurations 
 to control algorithm parameters.
+
+
+
+Keystore.py:
+    This module impliments a key value store that can be extended to anetwork level storage using Redis or similar.
+    It can be used to store files that are being processes and newly ingested data. 
