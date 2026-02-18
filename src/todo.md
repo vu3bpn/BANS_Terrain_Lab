@@ -4,4 +4,9 @@
     > Selectively apply kmeans clustering to the data to deleiate above ground features.
     > Fill voids with interpolated terrain values.
 2. Train CNN on synthetic dataset.
+
+### Misc
+
+1. Data Download script
+
  

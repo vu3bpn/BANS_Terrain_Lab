@@ -19,15 +19,16 @@ A platform for applying AI to solve geographical problems.
     README.md        -- This file
     ./doc            -- All documentation-related files
     ./src            -- All source code
-    ./src/DTM        -- Code for DTM generation
-    ./src/flows      -- Code for natural flow estimation
-    ./src/drain      -- Code for optimal drainage design
-    ./src/misc       -- Miscellaneous scripts and utilities
+    ./src/DTM_xx.xx  -- Code for DTM generation
+    ./src/flows_xx.xx-- Code for natural flow estimation
+    ./src/drain_xx.xx-- Code for optimal drainage design
+    ./src/misc_xx.xx -- Miscellaneous scripts and utilities
+    ./src/config.py  -- Configurations for the project
     ./data           -- All data files
     ./data/input     -- Input datasets
     ./data/output    -- Output datasets
     ./data/models    -- Models and trained weights
     ./data/vectors   -- Vector data (Shapefiles, etc.)   
 
-All code directories will contain a `config.py` file with the necessary
+All code will contain a `config.py` file with the necessary
 configurations to control algorithm parameters.
