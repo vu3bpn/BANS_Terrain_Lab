@@ -1,11 +1,12 @@
 import pandas as pd
 import json
+import os
 from config import *
 
 class keystore:
     def __init__(self):
         if os.path.exists(local_keystore_filename):
-            self.store = json.loads(open(local_keystor_filename,'r').read())
+            self.store = json.loads(open(local_keystore_filename,'r').read())
         self.store = keystore_ini_dict
     def set(self, key, value):
         self.store[key] = value
@@ -17,6 +18,9 @@ class keystore:
         if not key in self.store:
             self.store[key] = []
         return self.store[key]
+    
+    def flush(self):
+        open(local_keystore_filename,'w').write(json.dumps(self.store,indent=2))
     def __del__(self):
-        open(local_keystor_filename,'w').write(json.dumps(self.store))
+        open(local_keystore_filename,'w').write(json.dumps(self.store,indent=2))
 store = keystore()
