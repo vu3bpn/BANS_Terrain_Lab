@@ -2,3 +2,7 @@ redis
 pandas
 gdal
 numpy
+python-pdal
+spyder_kernels
+ipykernel
+tensorflow-gpu

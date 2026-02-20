@@ -3,10 +3,12 @@ import time
 from pathlib import Path
 
 #%% configurations for data and input/output directories
-data_dir = os.path.join(Path.cwd().parent,"data")
+base_dir = r"/mnt/nvme1n1/Bipin/Scripts/geo_ai"
+data_dir = os.path.join(base_dir,"data")
 input_dir = os.path.join(data_dir,"input")
 input_laz_dir = os.path.join(input_dir,"laz")
 download_dir = os.path.join(input_dir,"Downloads")
+dtm_dir = os.path.join(input_dir,"dtm")
 
 
 #%% Input files
@@ -26,13 +28,14 @@ keystore_ini_dict = {"Downloaded":[]}
 #%%
 def log(message):
     print(message)
-    open(logfile,"a").write(f"{time.ctime()}  {message}\n")
+    open(logfile,"a").write(f"{time.ctime()}  {message} \n")
 
 #%% make required dirs
 required_dirs = [
         download_dir,
         input_dir,
         input_laz_dir,
+        dtm_dir,
         ]
     
 for dir1 in required_dirs:
