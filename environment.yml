@@ -1,0 +1,21 @@
+
+name: geoai
+
+channels: 
+   - conda-forge
+   - defaults
+
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - gdal
+  - python-pdal
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - geopandas
+  - rasterio
+  - xarray
+  - spyder-kernels
+  - ipykernel
