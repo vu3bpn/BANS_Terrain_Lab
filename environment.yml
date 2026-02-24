@@ -19,3 +19,4 @@ dependencies:
   - xarray
   - spyder-kernels
   - ipykernel
+  - laspy

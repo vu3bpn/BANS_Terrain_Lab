@@ -11,6 +11,7 @@ import json
 import numpy as np
 from pathlib import Path
 import os
+import laspy
 from config import *
 
 if __name__ == "__main__":
@@ -33,6 +34,10 @@ if __name__ == "__main__":
                 "limits": "Classification[2:2]"
             },
             {
+                  "type": "filters.reprojection",
+                  "out_srs": "EPSG:4326"
+                },
+            {
                 "type": "writers.gdal",
                 "filename": "dtm.tif",
                 "resolution": 1.0,
@@ -54,6 +59,10 @@ if __name__ == "__main__":
                     "limits": "Classification[2:2]"
                 },
                 {
+                  "type": "filters.reprojection",
+                  "out_srs": "EPSG:4326"
+                },
+                {
                     # Interpolate ground points into a raster DTM
                     "type": "writers.gdal",
                     "filename": "dtm.tif",
@@ -71,10 +80,12 @@ if __name__ == "__main__":
 
     for las_file in las_input_filenames:        
         #input_las_path = os.path.join(input_laz_dir, las_file)
+        input_epsg = laspy.read(las_file).header.parse_crs().to_epsg()
         las_filename = str(las_input_filenames[0].name)
         ground_pipeline["pipeline"][0]["filename"] = str(las_file)
         dtm_output_path = os.path.join(dtm_dir, f"{os.path.splitext(las_filename)[0]}_dtm.tif")
-        ground_pipeline["pipeline"][3]["filename"] = dtm_output_path    
+        ground_pipeline["pipeline"][4]["filename"] = dtm_output_path  
+        #ground_pipeline["pipeline"][3]["a_srs"] = f"EPSG:{input_epsg}"
     
         pipeline = pdal.Pipeline(json.dumps(ground_pipeline))
         pipeline.execute()
