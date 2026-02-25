@@ -13,6 +13,8 @@ from pathlib import Path
 import os
 import laspy
 from config import *
+import rasterio
+from multiprocessing import Pool
 
 if __name__ == "__main__":
     ground_pipeline = {
@@ -24,6 +26,7 @@ if __name__ == "__main__":
             {
                 # Classify ground points automatically
                 "type": "filters.smrf",
+                #"type": "filters.pmf",
                 "slope": 0.15,
                 "window": 18.0,
                 "threshold": 0.5,
@@ -34,58 +37,44 @@ if __name__ == "__main__":
                 "limits": "Classification[2:2]"
             },
             {
-                  "type": "filters.reprojection",
-                  "out_srs": "EPSG:4326"
-                },
-            {
                 "type": "writers.gdal",
                 "filename": "dtm.tif",
-                "resolution": 1.0,
+                "resolution": dtm_resolution,
                 "output_type": "min",
-                "gdaldriver": "GTiff"
+                "gdaldriver": "GTiff",
+                "gdalopts": "COMPRESS=LZW"
             }
         ]
     }
     
-    dtm_pipeline = {
-            "pipeline": [
-                {
-                    "type": "readers.las",
-                    "filename": "input.las"
-                },
-                {
-                    # Keep only ground points (Classification == 2)
-                    "type": "filters.range",
-                    "limits": "Classification[2:2]"
-                },
-                {
-                  "type": "filters.reprojection",
-                  "out_srs": "EPSG:4326"
-                },
-                {
-                    # Interpolate ground points into a raster DTM
-                    "type": "writers.gdal",
-                    "filename": "dtm.tif",
-                    "resolution": 1.0,        # 1 meter per pixel — adjust as needed
-                    "output_type": "min",     # use minimum Z in each cell (bare earth)
-                    "gdaldriver": "GTiff"
-                }
-            ]
-        }
     
-if __name__ == "__main__":
+def run_dtm_pipeline(las_file):    
+    las_filename = str(las_file.name)
+    dtm_filename = f"{os.path.splitext(las_filename)[0]}_dtm.tif"
+    ground_pipeline["pipeline"][0]["filename"] = str(las_file)
+    dtm_output_path = os.path.join(dtm_dir,dtm_filename)
+    ground_pipeline["pipeline"][3]["filename"] = dtm_output_path  
+    #ground_pipeline["pipeline"][3]["a_srs"] = f"EPSG:{input_epsg}"
+    pipeline = pdal.Pipeline(json.dumps(ground_pipeline))
+    pipeline.execute()
     
-    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))    
+    #%% Apply crs to generated file
+    input_crs_wkt = laspy.read(las_file).header.parse_crs().to_wkt()
+    with rasterio.open(dtm_output_path,"r+") as dtm_file:
+        dtm_file.crs = rasterio.crs.CRS.from_wkt(input_crs_wkt)
+    log(f"generated DTM : {dtm_output_path}")
     
+    
+if __name__ == "__main__":    
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))   
+    with Pool(pipeline_cuncurrent_jobs) as p:
+        p.map(run_dtm_pipeline,las_input_filenames)
 
+if __name__ == "__main1__":
     for las_file in las_input_filenames:        
         #input_las_path = os.path.join(input_laz_dir, las_file)
-        input_epsg = laspy.read(las_file).header.parse_crs().to_epsg()
-        las_filename = str(las_input_filenames[0].name)
-        ground_pipeline["pipeline"][0]["filename"] = str(las_file)
-        dtm_output_path = os.path.join(dtm_dir, f"{os.path.splitext(las_filename)[0]}_dtm.tif")
-        ground_pipeline["pipeline"][4]["filename"] = dtm_output_path  
-        #ground_pipeline["pipeline"][3]["a_srs"] = f"EPSG:{input_epsg}"
-    
-        pipeline = pdal.Pipeline(json.dumps(ground_pipeline))
-        pipeline.execute()
+        run_dtm_pipeline(las_file)
+        
+        
+        
+        

@@ -23,6 +23,8 @@ local_keystore_filename = os.path.join(input_dir,"keystore.json")
 
 #%% variables
 keystore_ini_dict = {"Downloaded":[]}
+dtm_resolution = 0.1
+pipeline_cuncurrent_jobs = 3
 
 
 #%%
