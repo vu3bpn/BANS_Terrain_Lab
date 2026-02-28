@@ -14,6 +14,13 @@ A platform for applying AI to solve geographical problems.
 2.  Drainage network provided as Shapefiles.
 3.  Documentation and final report.
 
+## Howto
+
+Install necessary packages in a conda env
+> conda env create -f environment.yml
+> conda activate geoai
+
+
 ## Folder Structure
 
     README.md        -- This file
