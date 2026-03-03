@@ -11,6 +11,7 @@ download_dir = os.path.join(input_dir,"Downloads")
 dtm_dir = os.path.join(input_dir,"dtm")
 debug_csv_dir = os.path.join(input_dir,"csv")
 debug_subset_dir = os.path.join(input_dir,"subsets")
+copc_dir = os.path.join(input_dir,"copc")
 
 
 #%% Input files
@@ -44,7 +45,8 @@ required_dirs = [
         input_laz_dir,
         dtm_dir,
         debug_csv_dir,
-        debug_subset_dir
+        debug_subset_dir,
+        copc_dir
         ]
     
 for dir1 in required_dirs:
