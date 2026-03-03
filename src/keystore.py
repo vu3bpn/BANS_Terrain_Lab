@@ -1,13 +1,15 @@
 import pandas as pd
 import json
 import os
+from pathlib import Path
 from config import *
 
 class keystore:
     def __init__(self):
         if os.path.exists(local_keystore_filename):
-            self.store = json.loads(open(local_keystore_filename,'r').read())
-        self.store = keystore_ini_dict
+            self.store = json.loads(Path(local_keystore_filename).read_text())
+        else:
+            self.store = keystore_ini_dict
     def set(self, key, value):
         self.store[key] = value
         
@@ -20,7 +22,7 @@ class keystore:
         return self.store[key]
     
     def flush(self):
-        open(local_keystore_filename,'w').write(json.dumps(self.store,indent=2))
-    def __del__(self):
-        open(local_keystore_filename,'w').write(json.dumps(self.store,indent=2))
+        with open(local_keystore_filename,'w') as key_file:
+            key_file.write(json.dumps(self.store,indent=2))
+    
 store = keystore()

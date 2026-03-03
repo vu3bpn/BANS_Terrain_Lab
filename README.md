@@ -19,6 +19,7 @@ A platform for applying AI to solve geographical problems.
 Install necessary packages in a conda env
 > conda env create -f environment.yml
 > conda activate geoai
+create a file src/data/input/data_links.txt and copy data links 
 
 
 ## Folder Structure

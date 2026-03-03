@@ -6,17 +6,15 @@ channels:
    - defaults
 
 dependencies:
-  - python=3.10
+  - python=3.13
   - numpy
   - pandas
   - gdal
+  - rasterio
   - python-pdal
   - scikit-learn
   - matplotlib
   - seaborn
-  - geopandas
-  - rasterio
-  - xarray
-  - spyder-kernels
-  - ipykernel
   - laspy
+  - pytorch
+  - xgboost

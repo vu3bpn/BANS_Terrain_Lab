@@ -1,8 +1,8 @@
-redis
+
 pandas
 gdal
+rasterio
 numpy
 python-pdal
-spyder_kernels
-ipykernel
-tensorflow-gpu
+laspy
+
