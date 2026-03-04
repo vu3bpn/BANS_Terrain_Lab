@@ -6,6 +6,7 @@ data_dir = os.path.join(Path.cwd().parent,"data")
 input_dir = os.path.join(data_dir,"input")
 input_laz_dir = os.path.join(input_dir,"laz")
 download_dir = os.path.join(input_dir,"Downloads")
+output_dir = os.path.join(data_dir,"outputs")
 
 
 #%% Input files
