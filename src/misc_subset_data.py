@@ -6,7 +6,7 @@ from config import *
 
     
 def convert_to_tiles(subset_n=10):
-    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz")) 
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz")) + list(Path(input_laz_dir).rglob("*.las"))
     for las_file in las_input_filenames:    
         print(las_file)
         las_file_p = laspy.open(las_file)        
