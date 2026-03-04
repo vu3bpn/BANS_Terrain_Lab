@@ -14,6 +14,14 @@ A platform for applying AI to solve geographical problems.
 2.  Drainage network provided as Shapefiles.
 3.  Documentation and final report.
 
+## Howto
+
+Install necessary packages in a conda env
+> conda env create -f environment.yml
+> conda activate geoai
+create a file src/data/input/data_links.txt and copy data links 
+
+
 ## Folder Structure
 
     README.md        -- This file
@@ -32,3 +40,9 @@ A platform for applying AI to solve geographical problems.
 
 Code will contain a `config.py` file with the necessary configurations 
 to control algorithm parameters.
+
+
+
+Keystore.py:
+    This module impliments a key value store that can be extended to anetwork level storage using Redis or similar.
+    It can be used to store files that are being processes and newly ingested data. 
