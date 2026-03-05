@@ -1,2 +1,10 @@
 data/*
 src/__pycache__/*
+*.laz
+*.las
+*.laz
+*checkpoint.ipynb
+*.ipynb_checkpoints
+*.aux.*
+*.tif
+*.csv
