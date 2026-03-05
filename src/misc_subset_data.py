@@ -52,9 +52,23 @@ if __name__ == "__main1__":
                         writer.write_points(points)
                     log(f"generated {out_file_path}")
             
+
+
+def subset_las_dict(las_file_path,center_x,center_y,window,las_dict):
+    las_file_p = laspy.open(las_file_path)
+    selected_points = []
+    for points in las_file_p.chunk_iterator(chunk_size):
+        pass
+        
+    
+    
+
+
+
+
 if __name__ == "__main__":
     #convert_to_tiles()
-    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))[:1]     
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))
     for las_file in las_input_filenames:    
         print(las_file)
         las_file_p = laspy.open(las_file)        
@@ -67,10 +81,11 @@ if __name__ == "__main__":
         window = 10
         center_x = (x_max+x_min)/2
         center_y = (y_max+y_min)/2
-        selected_points = []
+
+
         out_filename = os.path.split(las_file)[-1].split('.')[0]+f"subset_1.laz"
-        out_file_path =  os.path.join(fixed_window_subset_dir,out_filename)
-        
+        selected_points = []
+        out_file_path =  os.path.join(fixed_window_subset_dir,out_filename)        
         las_file_p = laspy.open(las_file)
         for points in las_file_p.chunk_iterator(chunk_size):
             x,y = points.x.copy(),points.y.copy()
@@ -103,14 +118,3 @@ if __name__ == "__main__":
                 writer.write_points(record)
             log(f"generated {out_file_path}")
             
-
-            '''
-            with laspy.open(out_file_path,mode='w',header = out_header) as writer:
-                for points in selected_points:
-                    writer.write_points(points)
-                log(f"generated {out_file_path}")'''
-        
-        
-        
-        
-             
