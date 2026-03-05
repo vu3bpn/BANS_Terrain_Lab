@@ -74,9 +74,9 @@ if __name__ == "__main__":
         las_file_p = laspy.open(las_file)
         for points in las_file_p.chunk_iterator(chunk_size):
             x,y = points.x.copy(),points.y.copy()
-            x_min1 = center_x - window
+            x_min1 = center_x 
             x_max1 = center_x + window
-            y_min1 = center_y - window
+            y_min1 = center_y 
             y_max1 = center_y + window
             mask = (x >= x_min1) & (x < x_max1) & (y >= y_min1) & (y < y_max1)
             if sum(mask) >0 :
@@ -93,11 +93,22 @@ if __name__ == "__main__":
         if len(selected_points) >0:
             total_points = sum(len(x) for x in selected_points)
             record = ScaleAwarePointRecord.zeros(total_points, header=hdr)
+            for var in variables:
+                start_idx = 0
+                for points in selected_points:
+                    end_idx = start_idx + len(points)
+                    record[var][start_idx:end_idx] = points[var]
+                    start_idx = end_idx
+            with laspy.open(out_file_path, mode='w', header=out_header) as writer:
+                writer.write_points(record)
+            log(f"generated {out_file_path}")
             
+
+            '''
             with laspy.open(out_file_path,mode='w',header = out_header) as writer:
                 for points in selected_points:
                     writer.write_points(points)
-                log(f"generated {out_file_path}")
+                log(f"generated {out_file_path}")'''
         
         
         
