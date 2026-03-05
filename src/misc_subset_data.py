@@ -92,7 +92,7 @@ if __name__ == "__main__":
         out_header.add_crs(out_crs)
         if len(selected_points) >0:
             total_points = sum(len(x) for x in selected_points)
-            record = ScaleAwarePointRecord.zeros(total_points, header=hdr)
+            record = laspy.ScaleAwarePointRecord.zeros(total_points, header=out_header)
             for var in variables:
                 start_idx = 0
                 for points in selected_points:
