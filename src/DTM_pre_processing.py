@@ -25,7 +25,10 @@ ground_pipeline = {
             "filename": "input.las"
         },
         {
-        "type":"writers.text",
+                "type": "filters.smrf"
+          },
+        {
+        "type":"writers.las",
         }
     ]
 }
@@ -53,13 +56,12 @@ def run_dtm_pipeline(las_file):
     '''
     
     
-if __name__ == "__main1__":    
+if __name__ == "__main__":    
     las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))   
     with Pool(pipeline_cuncurrent_jobs) as p:
         p.map(run_dtm_pipeline,las_input_filenames)
 
-if __name__ == "__main__":
-    
+if __name__ == "__main1__":    
     las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))  
     for las_file in las_input_filenames:    
         print(las_file)
