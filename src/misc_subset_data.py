@@ -111,12 +111,14 @@ def split_into(las_file_path,n):
     
     
 if __name__ == "__main__":
+    '''subset each scene into 5x5 subseens'''
     las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))
     for las_file in las_input_filenames:  
         split_into(las_file,5)
 
 
 if __name__ == "__main1__":
+    '''subset into 10x10 windows'''
     las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))
     for las_file in las_input_filenames:  
         print(las_file)
