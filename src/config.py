@@ -14,11 +14,13 @@ debug_subset_dir = os.path.join(input_dir,"subsets")
 fixed_window_subset_dir = os.path.join(input_dir,"subset_fixed_w")
 split_files_subset_dir = os.path.join(input_dir,"split_files")
 copc_dir = os.path.join(input_dir,"copc")
+output_dir = os.path.join(data_dir,"output")
 
 
 #%% Input files
 data_url_list_filename = os.path.join(input_dir,"data_links.txt")
 logfile = os.path.join(data_dir,"run_log.txt")
+data_info_file = os.path.join(output_dir,"data_info.csv")
 
 
 #%% files
@@ -50,7 +52,8 @@ required_dirs = [
         debug_subset_dir,
         copc_dir,
         fixed_window_subset_dir,
-        split_files_subset_dir
+        split_files_subset_dir,
+        output_dir
         ]
     
 for dir1 in required_dirs:

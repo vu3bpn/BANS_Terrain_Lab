@@ -22,7 +22,6 @@ ground_pipeline = {
     "pipeline": [
         {
             "type": "readers.las",
-            "filename": "input.las"
         },
         {
                 "type": "filters.smrf"
@@ -36,8 +35,11 @@ ground_pipeline = {
     
 def run_dtm_pipeline(las_file):    
     las_filename = str(las_file.name)
-    dtm_filename = f"{os.path.splitext(las_filename)[0]}_dtm.laz"
+    dtm_filename = f"{os.path.splitext(las_filename)[0]}_dtm.las"
     dtm_output_path = os.path.join(dtm_dir,dtm_filename)
+    if os.path.exists(dtm_output_path):
+        log(f"Skipping DTM file {dtm_output_path}\n")
+        return None
     
     ground_pipeline["pipeline"][0]["filename"] = str(las_file)
     ground_pipeline["pipeline"][-1]["filename"] = dtm_output_path  
@@ -56,8 +58,15 @@ def run_dtm_pipeline(las_file):
     '''
     
     
-if __name__ == "__main__":    
-    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))   
+if __name__ == "__main1__":  
+    '''dtm pipeline sequential'''
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.las")) +  list(Path(input_laz_dir).rglob("*.LAS")) 
+    for filename1 in las_input_filenames:
+        run_dtm_pipeline(filename1)
+    
+if __name__ == "__main__":  
+    '''dtm pipeline parallel'''
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))  +  list(Path(input_laz_dir).rglob("*.LAS"))  
     with Pool(pipeline_cuncurrent_jobs) as p:
         p.map(run_dtm_pipeline,las_input_filenames)
 
