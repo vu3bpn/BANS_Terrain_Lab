@@ -15,6 +15,7 @@ fixed_window_subset_dir = os.path.join(input_dir,"subset_fixed_w")
 split_files_subset_dir = os.path.join(input_dir,"split_files")
 copc_dir = os.path.join(input_dir,"copc")
 output_dir = os.path.join(data_dir,"output")
+vector_dir = os.path.join(input_dir,"vectors")
 
 
 #%% Input files
@@ -34,6 +35,9 @@ dtm_resolution = 0.1
 pipeline_cuncurrent_jobs = 3
 chunk_size = 1_000_000  # chunk size for reading las file
 subset_n  = 10
+
+las_vect_dict = {"64334_2H_(REFLIGHT)_POINT_CLOUD.las":"rajastan_64334_2h.shp"}
+
 
 #%%
 def log(message):

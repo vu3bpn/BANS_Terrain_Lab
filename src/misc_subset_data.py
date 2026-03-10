@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 from tqdm import tqdm
 import geopandas as gpd
+import pandas
 from config import *
 from keystore import *
 
@@ -53,15 +54,34 @@ if __name__ == "__main1__":
                     for points in selected_points:
                         writer.write_points(points)
                     log(f"generated {out_file_path}")
-            
+    
 
-def subset_with_shapefile(las_file_path,shapefile_path):
+
+if __name__ == "__main__":
+    data_info_df = pandas.read_csv(data_info_file)
+    filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
+    for las_file in las_vect_dict:
+        vect_file = las_vect_dict[las_file]
+        shapefile_path = os.path.join(vector_dir,vect_file)
+        las_file_path = filename_paths[las_file]
+        #subset_with_shapefile(las_file_path,shapefile_path)
+        
+
+#def subset_with_shapefile(las_file_path,shapefile_path):
+if __name__ == "__main__":
     gdf = gpd.read_file(shapefile_path)
-    bounds = gdf.geometry.bounds
-    ids = gdf['id']
     las_file_p = laspy.open(las_file_path)
+    #bounds = list(gdf.geometry.bounds)
+    #ids = gdf['id']    
     variables = list(las_file_p.header.point_format.dimension_names)
-    for idx,(x_min,y_min,x_max,y_max) in zip(ids,bounds.minx,bounds.miny,bounds.maxx,bounds.maxy):
+    #for idx,bound in zip(ids,bounds):
+    for row1 in gdf.iterrows():
+        #bound = row1[1].geometry.bounds
+        idx   =  row1[1]['id']
+        (x_min,
+        y_min,
+        x_max,        
+        y_max) = row1[1].geometry.bounds
         selected_points = []
         out_filename = os.path.split(las_file_path)[-1].split(".")[0]+f"_id_{idx}.laz"            
         out_file_path = os.path.join(debug_subset_dir,out_filename)  
@@ -83,16 +103,33 @@ def subset_with_shapefile(las_file_path,shapefile_path):
         out_crs = las_file_p.header.parse_crs()
         out_header.add_crs(out_crs)
         if len(selected_points) >0:
+            total_points = sum(len(x) for x in selected_points)
+            record = laspy.ScaleAwarePointRecord.zeros(total_points, header=out_header)
+            for var in variables:
+                start_idx = 0
+                for points in selected_points:
+                    end_idx = start_idx + len(points)
+                    record[var][start_idx:end_idx] = points[var]
+                    start_idx = end_idx
+            
+            with laspy.open(out_file_path, mode='w', header=out_header) as writer:
+                writer.write_points(record)
+            
+            '''
             with laspy.open(out_file_path,mode='w',header = out_header) as writer:
                 for points in selected_points:
                     writer.write_points(points)
-                log(f"generated {out_file_path}")   
+                log(f"generated {out_file_path}")  
+            '''
 
 
 
-if __name__ == "__main__":
+
+    
+def generate_data_info():
+#if __name__ == "__main__":
     las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
-    data_df = {}
+    data_df = []
     for filename1 in las_input_filenames:
         las_file_p = laspy.open(filename1)
         x_min = las_file_p.header.min[0] # Assuming x is 0 and y is 1 always
@@ -101,12 +138,20 @@ if __name__ == "__main__":
         y_max = las_file_p.header.max[1]
         crs = las_file_p.header.parse_crs().to_epsg()
         variables = list(las_file_p.header.point_format.dimension_names)  
-        data_df[filename1] = {"x_min":x_min,"x_max":x_max,"y_min":y_min,"y_max":y_max,"crs":crs,"variables":variables}
-    df = pd.DataFrame.from_dict(data_df,orient='index')
-    df.to_csv(data_info_file)
+        data_df.append({"filename":filename1,
+                        "x_min":x_min,
+                        "x_max":x_max,
+                        "y_min":y_min,
+                        "y_max":y_max,
+                        "crs":crs,
+                        "variables":variables})
+    df = pd.DataFrame.from_dict(data_df)
+    df.to_csv(data_info_file,index= False)
     
+if __name__ == "__main__":
+    generate_data_info()
     
-    
+
 
 
 def subset_las_record(las_file_path,center_x,center_y,window):
@@ -165,7 +210,7 @@ def split_into(las_file_path,n):
     
     
 if __name__ == "__main1__":
-    '''subset each scene into 5x5 subseens'''
+    '''subset each scene into 5x5 sub scenes'''
     las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
     for las_file in las_input_filenames:  
         split_into(las_file,5)
