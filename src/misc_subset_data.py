@@ -140,11 +140,7 @@ if __name__ == "__main1__":
                 with laspy.open(out_file_path, mode='w', header=out_header) as writer:
                     writer.write_points(record)
             
-            
-        
     
-
-
 
 if __name__ == "__main1__":
     #convert_to_tiles()
