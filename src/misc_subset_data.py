@@ -60,10 +60,22 @@ def subset_with_shapefile(las_file_path,shapefile_path):
     bounds = gdf.geometry.bounds
     
     
+    
+    
 if __name__ == "__main__":
     las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
     data_df = {}
     for filename1 in las_input_filenames:
+        las_file_p = laspy.open(filename1)
+        x_min = las_file_p.header.min[0] # Assuming x is 0 and y is 1 always
+        x_max = las_file_p.header.max[0]
+        y_min = las_file_p.header.min[1]
+        y_max = las_file_p.header.max[1]
+        crs = las_file_p.header.parse_crs().to_epsg()
+        variables = list(las_file_p.header.point_format.dimension_names)  
+        data_df[filename1] = {"x_min":x_min,"x_max":x_max,"y_min":y_min,"y_max":y_max,"crs":crs,"variables":variables}
+    df = pd.DataFrame.from_dict(data_df,orient='index')
+    df.to_csv(data_info_file)
     
     
     
