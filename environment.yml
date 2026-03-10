@@ -23,7 +23,7 @@ dependencies:
   - pytorch-cuda=12.2
   - xgboost
   - pyproj
-  - fiona
+  - geopandas
   - tqdm
   - pip
   - pip:
