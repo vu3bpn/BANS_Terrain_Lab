@@ -58,10 +58,38 @@ if __name__ == "__main1__":
 def subset_with_shapefile(las_file_path,shapefile_path):
     gdf = gpd.read_file(shapefile_path)
     bounds = gdf.geometry.bounds
-    
-    
-    
-    
+    ids = gdf['id']
+    las_file_p = laspy.open(las_file_path)
+    variables = list(las_file_p.header.point_format.dimension_names)
+    for idx,(x_min,y_min,x_max,y_max) in zip(ids,bounds.minx,bounds.miny,bounds.maxx,bounds.maxy):
+        selected_points = []
+        out_filename = os.path.split(las_file_path)[-1].split(".")[0]+f"_id_{idx}.laz"            
+        out_file_path = os.path.join(debug_subset_dir,out_filename)  
+        if os.path.exists(out_file_path):
+            continue
+        las_file_p = laspy.open(las_file_path)
+        for points in las_file_p.chunk_iterator(chunk_size):
+            x,y = points.x.copy(),points.y.copy()            
+            mask = (x >= x_min) & (x < x_max) & (y >= y_min) & (y < y_max)
+            if sum(mask) >0 :
+                selected_points.append(points[mask].copy())            
+            
+        print(las_file_p.header.point_format)
+        out_header = laspy.LasHeader(point_format=las_file_p.header.point_format,version="1.4")
+        out_header.x_scale = las_file_p.header.x_scale
+        out_header.y_scale = las_file_p.header.y_scale
+        out_header.z_scale = las_file_p.header.z_scale
+        out_header.offsets = las_file_p.header.offsets            
+        out_crs = las_file_p.header.parse_crs()
+        out_header.add_crs(out_crs)
+        if len(selected_points) >0:
+            with laspy.open(out_file_path,mode='w',header = out_header) as writer:
+                for points in selected_points:
+                    writer.write_points(points)
+                log(f"generated {out_file_path}")   
+
+
+
 if __name__ == "__main__":
     las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
     data_df = {}
