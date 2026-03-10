@@ -23,6 +23,8 @@ dependencies:
   - pytorch-cuda=12.2
   - xgboost
   - pyproj
+  - fiona
+  - tqdm
   - pip
   - pip:
     - tensorflow[and-cuda]

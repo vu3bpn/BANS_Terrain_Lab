@@ -2,6 +2,7 @@ import laspy
 import itertools
 import numpy as np
 from tqdm import tqdm
+import geopandas as gpd
 from config import *
 from keystore import *
 
@@ -53,6 +54,19 @@ if __name__ == "__main1__":
                         writer.write_points(points)
                     log(f"generated {out_file_path}")
             
+
+def subset_with_shapefile(las_file_path,shapefile_path):
+    gdf = gpd.read_file(shapefile_path)
+    bounds = gdf.geometry.bounds
+    
+    
+if __name__ == "__main__":
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
+    data_df = {}
+    for filename1 in las_input_filenames:
+    
+    
+    
 
 
 def subset_las_record(las_file_path,center_x,center_y,window):
@@ -110,9 +124,9 @@ def split_into(las_file_path,n):
                 writer.write_points(record)
     
     
-if __name__ == "__main__":
+if __name__ == "__main1__":
     '''subset each scene into 5x5 subseens'''
-    las_input_filenames = list(Path(input_laz_dir).rglob("*.laz"))
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
     for las_file in las_input_filenames:  
         split_into(las_file,5)
 
