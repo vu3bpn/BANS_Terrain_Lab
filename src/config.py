@@ -12,6 +12,7 @@ dtm_dir = os.path.join(input_dir,"dtm")
 debug_csv_dir = os.path.join(input_dir,"csv")
 debug_subset_dir = os.path.join(input_dir,"subsets")
 fixed_window_subset_dir = os.path.join(input_dir,"subset_fixed_w")
+split_files_subset_dir = os.path.join(input_dir,"split_files")
 copc_dir = os.path.join(input_dir,"copc")
 
 
@@ -48,7 +49,8 @@ required_dirs = [
         debug_csv_dir,
         debug_subset_dir,
         copc_dir,
-        fixed_window_subset_dir
+        fixed_window_subset_dir,
+        split_files_subset_dir
         ]
     
 for dir1 in required_dirs:
