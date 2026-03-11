@@ -83,7 +83,7 @@ if __name__ == "__main__":
         x_max,        
         y_max) = row1[1].geometry.bounds
         selected_points = []
-        out_filename = os.path.split(las_file_path)[-1].split(".")[0]+f"_id_{idx}.laz"            
+        out_filename = os.path.split(las_file_path)[-1].split(".")[0]+f"_id_{idx}.las"            
         out_file_path = os.path.join(debug_subset_dir,out_filename)  
         if os.path.exists(out_file_path):
             continue
@@ -199,7 +199,7 @@ def split_into(las_file_path,n):
     log(f"window size {window} for {las_file}")
     idx = 1
     for x_0,y_0 in tqdm(list(itertools.product(np.arange(x_min,x_max,window),np.arange(y_min,y_max,window)))):
-        out_filename = os.path.split(las_file)[-1].split('.')[0]+f"subset_{idx}.laz"
+        out_filename = os.path.split(las_file)[-1].split('.')[0]+f"subset_{idx}.las"
         idx+=1
         out_file_path =  os.path.join(split_files_subset_dir,out_filename)
         if not os.path.exists(out_file_path):                
@@ -210,11 +210,11 @@ def split_into(las_file_path,n):
                 writer.write_points(record)
     
     
-if __name__ == "__main1__":
+if __name__ == "__main__":
     '''subset each scene into 5x5 sub scenes'''
     las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))
     for las_file in las_input_filenames:  
-        split_into(las_file,5)
+        split_into(las_file,10)
 
 
 if __name__ == "__main1__":
