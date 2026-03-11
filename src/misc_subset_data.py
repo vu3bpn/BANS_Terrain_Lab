@@ -110,8 +110,7 @@ if __name__ == "__main__":
                 for points in selected_points:
                     end_idx = start_idx + len(points)
                     record[var][start_idx:end_idx] = points[var]
-                    start_idx = end_idx
-            
+                    start_idx = end_idx            
             with laspy.open(out_file_path, mode='w', header=out_header) as writer:
                 writer.write_points(record)
             
