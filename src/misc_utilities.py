@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 import geopandas as gpd
 import pandas
+from tqdm import tqdm
 from config import *
 
 def generate_data_info():
@@ -25,7 +26,7 @@ def generate_data_info():
                         "y_max":y_max,
                         "crs":crs,
                         "variables":variables})
-    df = pd.DataFrame.from_dict(data_df)
+    df = pandas.DataFrame.from_dict(data_df)
     df.to_csv(data_info_file,index= False)
 
 def subset_las_record(las_file_path,center_x,center_y,window):
@@ -62,20 +63,20 @@ def subset_las_record(las_file_path,center_x,center_y,window):
     return None,None
 
 def split_into(las_file_path,n):
-    las_file_p = laspy.open(las_file)        
+    las_file_p = laspy.open(las_file_path)        
     x_min = las_file_p.header.min[0] # Assuming x is 0 and y is 1 always
     x_max = las_file_p.header.max[0]
     y_min = las_file_p.header.min[1]
     y_max = las_file_p.header.max[1]
     window = max((x_max-x_min)/n,(y_max-y_min)/n)
-    log(f"window size {window} for {las_file}")
+    log(f"window size {window} for {las_file_path}")
     idx = 1
     for x_0,y_0 in tqdm(list(itertools.product(np.arange(x_min,x_max,window),np.arange(y_min,y_max,window)))):
-        out_filename = os.path.split(las_file)[-1].split('.')[0]+f"subset_{idx}.laz"
+        out_filename = os.path.split(las_file_path)[-1].split('.')[0]+f"_subset_{idx}.las"
         idx+=1
         out_file_path =  os.path.join(split_files_subset_dir,out_filename)
         if not os.path.exists(out_file_path):                
-            record,out_header = subset_las_record(las_file,x_0,y_0,window)
+            record,out_header = subset_las_record(las_file_path,x_0,y_0,window)
             if record is None:
                 continue
             with laspy.open(out_file_path, mode='w', header=out_header) as writer:

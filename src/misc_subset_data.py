@@ -80,13 +80,16 @@ if __name__ == "__main__":
 
 
 #def subset_with_shapefile(las_file_path,shapefile_path):
-if __name__ == "__main__":
+if __name__ == "__main1__":
     gdf = gpd.read_file(shapefile_path)
     las_file_p = laspy.open(las_file_path)
     #bounds = list(gdf.geometry.bounds)
     #ids = gdf['id']    
     variables = list(las_file_p.header.point_format.dimension_names)
     #for idx,bound in zip(ids,bounds):
+
+
+    
     for row1 in gdf.iterrows():
         #bound = row1[1].geometry.bounds
         idx   =  row1[1]['id']
