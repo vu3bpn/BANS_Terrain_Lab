@@ -66,7 +66,7 @@ if __name__ == "__main1__":
     
 if __name__ == "__main__":  
     '''dtm pipeline parallel'''
-    las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))  +  list(Path(input_laz_dir).rglob("*.LAS"))  
+    las_input_filenames = list(Path(input_laz_dir).rglob("*.las"))  
     with Pool(pipeline_cuncurrent_jobs) as p:
         p.map(run_dtm_pipeline,las_input_filenames)
 

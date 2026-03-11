@@ -4,8 +4,10 @@ from pathlib import Path
 
 #%% configurations for data and input/output directories
 base_dir = os.path.join(os.getcwd(),os.pardir)
+base_dir = os.path.normpath(base_dir)
 data_dir = os.path.join(base_dir,"data")
 input_dir = os.path.join(data_dir,"input")
+debug_dir = os.path.join(data_dir,"debug")
 input_laz_dir = os.path.join(input_dir,"laz")
 download_dir = os.path.join(input_dir,"Downloads")
 dtm_dir = os.path.join(input_dir,"dtm")
@@ -49,6 +51,7 @@ def log(message):
 required_dirs = [
         data_dir,
         input_dir,
+        debug_dir,
         download_dir,        
         input_laz_dir,
         dtm_dir,
