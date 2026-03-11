@@ -40,8 +40,7 @@ if __name__ == "__main1__":
                 y_max1 = y_min1 + y_window 
                 mask = (x >= x_min1) & (x < x_max1) & (y >= y_min1) & (y < y_max1)
                 if sum(mask) >0 :
-                    selected_points.append(points[mask].copy())            
-            
+                    selected_points.append(points[mask].copy())
             print(las_file_p.header.point_format)
             out_header = laspy.LasHeader(point_format=las_file_p.header.point_format,version="1.4")
             out_header.x_scale = las_file_p.header.x_scale
@@ -66,7 +65,19 @@ if __name__ == "__main__":
         shapefile_path = os.path.join(vector_dir,vect_file)
         las_file_path = filename_paths[las_file]
         #subset_with_shapefile(las_file_path,shapefile_path)
-        
+        gdf = gpd.read_file(shapefile_path)
+        records = []
+        headers = []
+        for row1 in gdf.iterrows():
+            idx   =  row1[1]['id']
+            record1,header1 = subset_with_geom(las_file_path,row1[1].geometry)
+            records.append(record1)
+            headers.append(header1)
+
+
+
+
+
 
 #def subset_with_shapefile(las_file_path,shapefile_path):
 if __name__ == "__main__":

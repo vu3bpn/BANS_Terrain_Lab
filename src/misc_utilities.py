@@ -80,3 +80,32 @@ def split_into(las_file_path,n):
                 continue
             with laspy.open(out_file_path, mode='w', header=out_header) as writer:
                 writer.write_points(record)
+
+def subset_with_geom(las_file_path,geom):
+    las_file_p = laspy.open(las_file_path)
+    variables = list(las_file_p.header.point_format.dimension_names)  
+    selected_points = []
+    for points in las_file_p.chunk_iterator(chunk_size):
+        x,y = points.x.copy(),points.y.copy()        
+        mask = geom.contains(gpd.points_from_xy(x,y))
+        if sum(mask) >0 :
+            selected_points.append(points[mask].copy())         
+        out_header = laspy.LasHeader(point_format=las_file_p.header.point_format,
+                                     version=las_file_p.header.version)
+        out_header.x_scale = las_file_p.header.x_scale
+        out_header.y_scale = las_file_p.header.y_scale
+        out_header.z_scale = las_file_p.header.z_scale
+        out_header.offsets = las_file_p.header.offsets            
+        out_crs = las_file_p.header.parse_crs()
+        out_header.add_crs(out_crs)
+    if len(selected_points) >0:
+        total_points = sum(len(x) for x in selected_points)
+        record = laspy.ScaleAwarePointRecord.zeros(total_points, header=out_header)
+        for var in variables:
+            start_idx = 0
+            for points in selected_points:
+                end_idx = start_idx + len(points)
+                record[var][start_idx:end_idx] = points[var]
+                start_idx = end_idx
+        return record,out_header
+    return None,None

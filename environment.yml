@@ -25,6 +25,7 @@ dependencies:
   - pyproj
   - geopandas
   - tqdm
+  - scikit-learn
   - pip
   - pip:
     - tensorflow[and-cuda]
