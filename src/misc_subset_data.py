@@ -56,7 +56,6 @@ if __name__ == "__main1__":
                     log(f"generated {out_file_path}")
     
 
-
 if __name__ == "__main__":
     data_info_df = pandas.read_csv(data_info_file)
     filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
