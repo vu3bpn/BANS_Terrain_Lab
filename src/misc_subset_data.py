@@ -136,9 +136,11 @@ def generate_data_info():
         x_max = las_file_p.header.max[0]
         y_min = las_file_p.header.min[1]
         y_max = las_file_p.header.max[1]
+        size = las_file_p.header.point_count
         crs = las_file_p.header.parse_crs().to_epsg()
         variables = list(las_file_p.header.point_format.dimension_names)  
         data_df.append({"filename":filename1,
+                        "size":size,
                         "x_min":x_min,
                         "x_max":x_max,
                         "y_min":y_min,
