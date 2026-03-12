@@ -4,3 +4,4 @@ doc/*.pdf
 doc/*.aux
 doc/*.log
 doc/*.gz
+doc/sections/*.aux
