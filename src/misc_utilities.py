@@ -4,6 +4,7 @@ import numpy as np
 import geopandas as gpd
 import pandas
 from tqdm import tqdm
+from sklearn.neighbors import NearestNeighbors
 from config import *
 
 def generate_data_info():
@@ -110,3 +111,19 @@ def subset_with_geom(las_file_path,geom):
                 start_idx = end_idx
         return record,out_header
     return None,None
+
+
+def knn_fill(df):
+    ground_df = df.query("classification==2")
+    knn = NearestNeighbors(n_neighbors=4)
+    ground_points = np.array(ground_df[["X","Y","Z"]])
+    knn.fit(ground_points)
+    def get_z(row):
+        if row['classification'] == 2:
+            return row['Z']
+        dist,index = knn.kneighbors(np.array([row[["X","Y","Z"]]]))
+        nearest_ground_vectors = ground_points[index]
+        mean_z = np.mean(nearest_ground_vectors[:,2],dtype='int32')
+        return mean_z
+    df["Z"] =  df.apply(get_z, axis=1)
+    return df
