@@ -1,1 +1,20 @@
 \section{Solution plan}
+A redis server store the data that is being currently processed by any processing node
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\tikzstyle{block} =[ draw, text width = 4cm, minimum height=1.5cm, text badly centered, rounded corners, fill=blue!30, node distance = 3cm];
+        \node[block](server){Server / Data hosting};
+        \node[block, right of = server, node distance=5cm](redis){Redis keystore};
+        \node[block, below of = server](processing){Processing Nodes};
+        \node[block] at ($(processing)-(0.1,0.1)$) {Processing Nodes};
+        \node[block] at ($(processing)-(0.2,0.2)$) (pn3) {Processing Nodes};
+
+        \draw[->,thick](server) -- (processing);
+        \draw[<->,thick](processing) -| (redis);
+
+    \end{tikzpicture}
+	\caption{Scalable architecture}
+	\label{fig:Scaling plan}
+\end{figure}

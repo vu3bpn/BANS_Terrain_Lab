@@ -24,10 +24,10 @@ The model will learn to capture the complex relationships between the point clou
 \begin{figure}
 	\centering
 	\begin{tikzpicture}
-		\tikzstyle{block} =[ draw, text width = 3cm, minimum height=1.5cm, text badly centered, rounded corners, fill=blue!30];
+		\tikzstyle{block} =[ draw, text width = 4cm, minimum height=1.5cm, text badly centered, rounded corners, fill=blue!30];
 		\node[block] (las) {Point cloud data};    
 		\node[block, below of = las, node distance=3cm] (smrf) {classify ground points using SMRF (pdal library)};  
-		\node[block, below of = smrf, node distance=3cm]  (transformer) {Encoder-Decoder transformer architecture for DTM extraction};
+		\node[block, below of = smrf, node distance=3cm]  (transformer) {Encoder-Decoder transformer for DTM extraction};
 		\node[block, right of = smrf, node distance=5cm] (impute) {impute unclassified points using sklearn library};
 		\node[block,above of = impute, node distance=3cm] (vector) {training vector data};
 		
@@ -57,7 +57,7 @@ This DTM will serve as the basis for subsequent surface water flow estimation an
 		\node[block] (las) {Point cloud data};    
 		\node[block, right of = las, node distance=4cm] (spatialwindow) {Chunks of point cloud data (spatial window)};  
 		
-		\node[block, right of = spatialwindow, node distance=4cm]  (transformer) {Encoder-Decoder transformer architecture for DTM extraction};
+		\node[block, right of = spatialwindow, node distance=4cm]  (transformer) {Encoder-Decoder transformer};
 		\node[right of = transformer, node distance=3cm] (DTM output){DTM output};
 		
 		\draw[->,thick] (las) -- (spatialwindow);
