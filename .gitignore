@@ -1,2 +1,6 @@
 data/*
 src/__pycache__/*
+doc/*.pdf
+doc/*.aux
+doc/*.log
+doc/*.gz
