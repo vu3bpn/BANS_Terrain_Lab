@@ -34,7 +34,7 @@ local_keystore_filename = os.path.join(input_dir,"keystore.json")
 #%% variables
 keystore_ini_dict = {"Downloaded":[]}
 dtm_resolution = 0.1
-pipeline_cuncurrent_jobs = 3
+pipeline_cuncurrent_jobs = 2
 chunk_size = 1_000_000  # chunk size for reading las file
 subset_n  = 10
 
