@@ -74,6 +74,13 @@ This DTM will serve as the basis for subsequent surface water flow estimation an
 
 \begin{figure}
 	\centering
+	\includegraphics{AOI_knn_id2.png}
+	\caption{AOI for training data generation using knn imputation}
+	\label{fig:AOI_knn}
+\end{figure}
+
+\begin{figure}
+	\centering
 		\begin{subfigure}{\textwidth}
 		\includegraphics[width=0.8\textwidth]{paraview_dsm_id_2.png}
 		\caption{Input point cloud data (DSM)}
@@ -83,12 +90,12 @@ This DTM will serve as the basis for subsequent surface water flow estimation an
 		\includegraphics[width=0.8\textwidth]{paraview_dtm_id_2.png}
 		\caption{Derived DTM from the trained model}
 		\end{subfigure}
-		
+
 		\begin{subfigure}{\textwidth}
 		\includegraphics[width=0.8\textwidth]{paraview_ismr_id_2.png}
 		\caption{Ground points classified by SMRF}			
 		\end{subfigure}
-	\caption{DTM extraction results}
+	\caption{DTM extraction using knn imputation for training data generation}
 
 	\label{fig:dtm_results}
 \end{figure}
