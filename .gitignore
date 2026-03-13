@@ -8,3 +8,5 @@ doc/sections/*.aux
 doc/geoai.fdb_latexmk
 doc/geoai.fls
 *.toc
+*.bbl
+*.blg
