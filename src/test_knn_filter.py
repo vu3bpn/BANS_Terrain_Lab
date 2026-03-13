@@ -14,10 +14,10 @@ from sklearn.impute import SimpleImputer
 from config import *
 from misc_utilities import *
 
-
-def knn_fill_t(df):
+def knn_fill(df,k= 5,measure='mean'):
+    '''fill non terrain (classification != 2 ) to using nearest knn values'''
     ground_df = df.query("classification==2")
-    knn = NearestNeighbors(n_neighbors=5)
+    knn = NearestNeighbors(n_neighbors=k)
     ground_points = np.array(ground_df[["X","Y","Z"]])
     knn.fit(ground_points)
     def get_z(row):
@@ -27,40 +27,29 @@ def knn_fill_t(df):
                                     return_distance=False)
         nearest_ground_vectors = ground_points[index]
         #zvals = [x[2] for x in nearest_ground_vectors]
-        mean_z = np.mean(nearest_ground_vectors[:,:,2],dtype='int32')
-        print(mean_z)
+        z_vals = nearest_ground_vectors[:,:,2]
+        if measure == 'min':
+            min_z = np.min(z_vals)
+            return min_z
+        mean_z = np.mean(z_vals,dtype='int32')
         return mean_z
     df["Z"] =  df.apply(get_z, axis=1)
     return df
 
-def df_to_las(df,header,out_file_path):
-    total_points = len(df)
-    record = laspy.ScaleAwarePointRecord.zeros(total_points, header=header)
-    out_header = laspy.LasHeader(point_format=header.point_format,version="1.4")
-    out_header.x_scale = header.x_scale
-    out_header.y_scale = header.y_scale
-    out_header.z_scale = header.z_scale
-    out_header.offsets = header.offsets            
-    out_crs = header.parse_crs()
-    out_header.add_crs(out_crs)
-    for var1 in df.columns:
-        record[var1] = df[var1].values
-    with laspy.open(out_file_path, mode='w', header=out_header) as writer:
-                writer.write_points(record)
 
 
-if __name__ == "__main__":
+if __name__ == "__main1__":
     test_df = pandas.DataFrame({"X":range(50),"Y":range(50),"Z":range(50),"classification":2*np.ones(50)})
     test_df['Y'] += 50
     test_df['Z'] += 150
     classification = list(test_df['classification'])
     classification[20:30] = [0]*10
     test_df['classification'] = classification #test_df['classification']*(test_df['X']!=25)
-    filled_df = knn_fill_t(test_df)
+    filled_df = knn_fill(test_df)
     
     
 
-if __name__ == "__main1__":
+if __name__ == "__main__":
     data_info_df = pandas.read_csv(data_info_file)
     filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
     for las_file in las_vect_dict:
@@ -90,14 +79,18 @@ if __name__ == "__main1__":
             df.to_csv(terrain_debug_csv_file)
             
             
-            filled_df = knn_fill_t(df)            
+            filled_df = knn_fill(df,k=50,measure='min')            
             df_to_las(filled_df,dtm_header,dtm_debug_file)
             filled_df.to_csv(dtm_debug_csv_file)
 
             dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
             dsm_df = pandas.DataFrame(dsm_record.array)
             dsm_df.to_csv(dsm_debug_csv_file)
-            df_to_las(dsm_df,dsm_header,dsm_debug_file)
+            #df_to_las(dsm_df,dsm_header,dsm_debug_file)
+            
+            with laspy.open(dsm_debug_file, mode='w', header=dsm_header) as writer:
+                writer.write_points(dsm_record)
+
 
             #df_to_las(df,header,terrain_debug_file)
             #df_to_las(dsm_df,header,dsm_debug_file)
