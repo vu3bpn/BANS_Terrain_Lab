@@ -5,6 +5,8 @@ Created on Fri Mar 13 15:37:51 2026
 
 @author: bipin
 """
+from scipy import spatial
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, IterableDataset
@@ -14,6 +16,8 @@ import math
 import geopandas
 import pandas
 import os
+import spatial
+import random
 import numpy as np
 from config import *
 from misc_utilities import *
@@ -283,30 +287,73 @@ if __name__ == "__main__":
 #-----------data----------------
 
 class StreamingPointCloudDataset(IterableDataset):
-    def __init__(self,batch_size = 64,n_batches = 1000):
+    def __init__(self,batch_size = 64,n_batches = 1000,seq_len = 1024):
         super().__init__()
         # Initialize any state needed for streaming data here
         self.batch_size = batch_size
         self.n_batches = n_batches
+        self.seq_len = seq_len
+        self.files_list = []
+        self.selected_cols = ["X","Y","Z","intensity","red","green","blue"]    
+        self.read_files()
+
+
+    def read_files(self):
+        data_info_df = pandas.read_csv(data_info_file)
+        filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
+        for las_file in las_vect_dict:
+            vect_file = las_vect_dict[las_file]
+            shapefile_path = os.path.join(vector_dir,vect_file)
+            las_file_path = filename_paths[las_file]
+            las_file_name = os.path.splitext(las_file)[0]
+            dtm_file = las_file_name+"_dtm.las"
+            dtm_file_path = os.path.join(dtm_dir,dtm_file)
+            gdf = geopandas.read_file(shapefile_path)
+            for row1 in gdf.iterrows():
+                id = row1[1]['id']
+                geometry = row1[1].geometry
+                self.files_list.append((las_file_path,dtm_file_path,geometry))
+
+    def __len__(self):
+        return self.n_batches
+
+    def get_dataset(self):
+        file = random.choice(self.files_list)
+        las_file_path, dtm_file_path, geometry = file
+        dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
+        dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
+        dtm_df = pandas.DataFrame(dtm_record.array)
+        dsm_df = pandas.DataFrame(dsm_record.array)
+        xy = dsm_df[["X","Y"]]
+        tree = spatial.cKDTree(xy)
+        def get_patch(center):
+            _, idx = tree.query(center, k=self.seq_len)
+            return dsm_df.iloc[idx], dtm_df.iloc[idx]
+
+        center_points = random.sample(range(len(dsm_df)), self.batch_size)
+        patches = [get_patch(dsm_df.iloc[center][["X","Y"]]) for center in center_points]        
+        input_dataset = [patch[0][self.selected_cols].values for patch in patches]
+        target_dataset = [patch[1][self.selected_cols].values for patch in patches]            
+                    
+        dataset = TensorDataset(torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32))
+        return dataset
 
     def __iter__(self):
         # Implement logic to stream data in batches here
         # For example, read from files or generate data on the fly
         batches = range(self.n_batches)  # Placeholder for actual data streaming logic
         for batch in batches:
-            # Replace this with actual data loading logic
-            input_data = torch.randn(self.batch_size, 7)
-            target_data = torch.randn(self.batch_size, 7)
-            yield input_data, target_data
+            dataset = self.get_dataset()
+            yield dataset
 
 
 if __name__ == "__main__":
     n_patches = 34
     points_per_patch = 1024 
-    
-    
+    selected_cols = ["X","Y","Z","intensity","red","green","blue"]    
     data_info_df = pandas.read_csv(data_info_file)
     filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
+    files_list = []
     for las_file in las_vect_dict:
         vect_file = las_vect_dict[las_file]
         shapefile_path = os.path.join(vector_dir,vect_file)
@@ -318,21 +365,9 @@ if __name__ == "__main__":
         for row1 in gdf.iterrows():
             id = row1[1]['id']
             geometry = row1[1].geometry
-            dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
-            dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
-            dtm_df = pandas.DataFrame(dtm_record.array)
-            dsm_df = pandas.DataFrame(dsm_record.array)
-            xy = dsm_df[["X","Y"]]
-            
+            files_list.append((las_file_path,dtm_file_path,geometry))
 
-
-
-            input_dataset = np.array(dsm_df[["X","Y","Z","intensity","red","green","blue" ]])
-            target_dataset = np.array(dtm_df[["X","Y","Z","intensity","red","green","blue" ]])
-            
-                        
-            dataset = TensorDataset(torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32))
-
+    
     
     
 
