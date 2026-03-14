@@ -7,8 +7,14 @@ Created on Fri Mar 13 15:37:51 2026
 """
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, IterableDataset
 import math
+import geopandas
+import pandas
+import os
+import numpy as np
+from config import *
+from misc_utilities import *
 
 
 class MultiHeadAttention(nn.Module):
@@ -85,6 +91,49 @@ class TransformerBlock(nn.Module):
         return x
 
 
+class PatchNormaliser(nn.Module):
+    """
+    Normalises each channel of a patch independently across all points,
+    then denormalises using the saved statistics.
+
+    Operates per-sample (not batch-wide) so each patch gets its own μ/σ.
+    This is important: different patches from different scenes have
+    different scales, and you don't want one scene's outliers to
+    distort another's normalisation.
+
+    Input:  (batch, seq_len, n_features)
+    Output: (batch, seq_len, n_features)  — same shape, different scale
+    """
+
+    def __init__(self, eps: float = 1e-8):
+        super().__init__()
+        self.eps = eps
+
+    def normalise(self, x: torch.Tensor):
+        """
+        x: (B, N, F)
+        Returns normalised x, and the statistics needed to undo it.
+        μ, σ: (B, 1, F)  — one value per sample per feature channel
+        """
+        mu    = x.mean(dim=1, keepdim=True)   # mean over N points
+        sigma = x.std(dim=1, keepdim=True) + self.eps
+        x_norm = (x - mu) / sigma
+        return x_norm, mu, sigma
+
+    def denormalise(self, x_norm: torch.Tensor,
+                    mu: torch.Tensor, sigma: torch.Tensor):
+        """Reverse the normalisation using saved μ and σ."""
+        return x_norm * sigma + mu
+
+    def forward(self, x):
+        """
+        Convenience: normalise only (use denormalise() separately after model).
+        Returns (x_norm, mu, sigma).
+        """
+        return self.normalise(x)
+
+
+
 class Transformer7D(nn.Module):
     """
     A simple transformer that takes vectors of length 7
@@ -109,6 +158,9 @@ class Transformer7D(nn.Module):
     ):
         super().__init__()
 
+
+        self.norm = PatchNormaliser(eps=1e-8)
+
         # Project input_dim → d_model
         self.embedding = nn.Linear(input_dim, d_model)
 
@@ -129,12 +181,16 @@ class Transformer7D(nn.Module):
         Returns:
             Tensor of shape (batch_size, seq_len, 7)
         """
+        x, mu, sigma = self.norm(x)  # normalise input
+
         x = self.embedding(x)           # (batch, seq_len, d_model)
 
         for layer in self.layers:
             x = layer(x, mask)          # (batch, seq_len, d_model)
 
-        return self.output_projection(x)  # (batch, seq_len, 7)
+        x = self.output_projection(x)  # (batch, seq_len, 7)
+        x = self.norm.denormalise(x, mu, sigma)  # denormalise output
+        return x
 
 
 
@@ -223,7 +279,48 @@ if __name__ == "__main__":
     
 
 #-----------data----------------
+
+class StreamingPointCloudDataset(IterableDataset):
+    def __init__(self,batch_size = 64,n_batches = 1000):
+        super().__init__()
+        # Initialize any state needed for streaming data here
+        self.batch_size = batch_size
+        self.n_batches = n_batches
+
+    def __iter__(self):
+        # Implement logic to stream data in batches here
+        # For example, read from files or generate data on the fly
+        batches = range(self.n_batches)  # Placeholder for actual data streaming logic
+        for batch in batches:
+            # Replace this with actual data loading logic
+            input_data = torch.randn(self.batch_size, 7)
+            target_data = torch.randn(self.batch_size, 7)
+            yield input_data, target_data
+
+
 if __name__ == "__main__":
+    data_info_df = pandas.read_csv(data_info_file)
+    filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
+    for las_file in las_vect_dict:
+        vect_file = las_vect_dict[las_file]
+        shapefile_path = os.path.join(vector_dir,vect_file)
+        las_file_path = filename_paths[las_file]
+        las_file_name = os.path.splitext(las_file)[0]
+        dtm_file = las_file_name+"_dtm.las"
+        dtm_file_path = os.path.join(dtm_dir,dtm_file)
+        gdf = geopandas.read_file(shapefile_path)
+        for row1 in gdf.iterrows():
+            id = row1[1]['id']
+            geometry = row1[1].geometry
+            dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
+            dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
+            dtm_df = pandas.DataFrame(dtm_record.array)
+            dsm_df = pandas.DataFrame(dsm_record.array)
+
+            input_dataset = np.array(dsm_df[["X","Y","Z","intensity","red","green","blue" ]])
+            target_dataset = np.array(dtm_df[["X","Y","Z","intensity","red","green","blue" ]])
+            dataset = TensorDataset(torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32))
+
     
     
 
