@@ -8,6 +8,8 @@ Created on Fri Mar 13 15:37:51 2026
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, IterableDataset
+from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import KDTree
 import math
 import geopandas
 import pandas
@@ -299,6 +301,10 @@ class StreamingPointCloudDataset(IterableDataset):
 
 
 if __name__ == "__main__":
+    n_patches = 34
+    points_per_patch = 1024 
+    
+    
     data_info_df = pandas.read_csv(data_info_file)
     filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
     for las_file in las_vect_dict:
@@ -316,9 +322,15 @@ if __name__ == "__main__":
             dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
             dtm_df = pandas.DataFrame(dtm_record.array)
             dsm_df = pandas.DataFrame(dsm_record.array)
+            xy = dsm_df[["X","Y"]]
+            
+
+
 
             input_dataset = np.array(dsm_df[["X","Y","Z","intensity","red","green","blue" ]])
             target_dataset = np.array(dtm_df[["X","Y","Z","intensity","red","green","blue" ]])
+            
+                        
             dataset = TensorDataset(torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32))
 
     
@@ -331,8 +343,9 @@ if __name__ == "__main__":
     N_EPOCHS   = 30
     SEQ_LEN    = 10
     INPUT_DIM  = 7
-    print(f"Device: {DEVICE}")
+    log(f"Device: {DEVICE}")
     
+    n_val = int(0.2*len(dataset))
     train_set, val_set = torch.utils.data.random_split(
         dataset, [len(dataset) - n_val, n_val]
     )
@@ -349,7 +362,7 @@ if __name__ == "__main__":
 
 
 # ── Quick demo ────────────────────────────────────────────────────────────────
-if __name__ == "__main1__":  
+if __name__ == "__main__":  
     model.eval()
     with torch.no_grad():
         output = model(x)
