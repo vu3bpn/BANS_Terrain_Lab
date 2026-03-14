@@ -11,12 +11,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, IterableDataset
 from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors import KDTree
+
 import math
 import geopandas
 import pandas
 import os
-import spatial
 import random
 import numpy as np
 from config import *
@@ -332,8 +331,8 @@ class StreamingPointCloudDataset(IterableDataset):
 
         center_points = random.sample(range(len(dsm_df)), self.batch_size)
         patches = [get_patch(dsm_df.iloc[center][["X","Y"]]) for center in center_points]        
-        input_dataset = [patch[0][self.selected_cols].values for patch in patches]
-        target_dataset = [patch[1][self.selected_cols].values for patch in patches]            
+        input_dataset = [np.array(patch[0][self.selected_cols]) for patch in patches]
+        target_dataset = [np.array(patch[1][self.selected_cols]) for patch in patches]            
                     
         dataset = TensorDataset(torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32))
         return dataset
@@ -347,7 +346,7 @@ class StreamingPointCloudDataset(IterableDataset):
             yield dataset
 
 
-if __name__ == "__main__":
+if __name__ == "__main1__":
     n_patches = 34
     points_per_patch = 1024 
     selected_cols = ["X","Y","Z","intensity","red","green","blue"]    
@@ -380,11 +379,16 @@ if __name__ == "__main__":
     INPUT_DIM  = 7
     log(f"Device: {DEVICE}")
     
+    '''
     n_val = int(0.2*len(dataset))
     train_set, val_set = torch.utils.data.random_split(
         dataset, [len(dataset) - n_val, n_val]
     )
-    train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
+    '''
+    train_set = StreamingPointCloudDataset()
+    val_set = StreamingPointCloudDataset(n_batches=10)
+    
+    train_loader = DataLoader(train_set, batch_size=BATCH_SIZE)
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE)
     
     history = train(model, train_loader, val_loader,
