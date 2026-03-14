@@ -14,12 +14,13 @@ Figure \ref{fig:solution_plan} illustrates the training workflow for DTM extract
 
 \subsection{DTM extraction (Training)}
 
-SMRF (Simple Morphological Filter) from the PDAL library will be used to classify ground points in the point cloud data. 
+\ac{SMRF}\cite{SMRF} from the PDAL library will be used to classify ground points in the point cloud data. 
 sklearn library will be used to impute Z values for unclassified points to simulate the plain Terrain beneath the tree canopy. 
 This will help in generating a more accurate DTM that captures the underlying terrain features, which is crucial for surface water flow estimation and drainage planning.
 An Encoder-Decoder transformer architecture will be trained for DTM extraction, using the point cloud data as input and the derived DTM as output. on selected spatial windows of the point cloud data (Manually generated AOI where the tree canopy is pesent).
 The model will learn to capture the complex relationships between the point cloud data and the underlying terrain features, enabling it to generate accurate DTMs even in areas with dense tree canopy or other obstructions.
 
+\ac{Knn} \cite{knn} is used to impute missing data.
 
 \begin{figure}
 	\centering
