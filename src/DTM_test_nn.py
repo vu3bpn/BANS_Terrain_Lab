@@ -137,6 +137,13 @@ class PatchNormaliser(nn.Module):
         """
         return self.normalise(x)
 
+class dummy_model(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self,x):
+        return x
+
+
 
 
 class Transformer7D(nn.Module):
@@ -221,16 +228,18 @@ def train(
         model.train()
         total_loss = 0.0
         for x_batch, y_batch in train_loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-
-            optimizer.zero_grad()          # clear old gradients
-            pred = model(x_batch)          # forward pass → (batch, seq, 7)
-            loss = criterion(pred, y_batch)  # compute MSE
-            loss.backward()                # backprop
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            optimizer.step()               # update weights
-
-            total_loss += loss.item()
+            try:
+                x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+                optimizer.zero_grad()          # clear old gradients
+                pred = model(x_batch)          # forward pass → (batch, seq, 7)
+                loss = criterion(pred, y_batch)  # compute MSE
+                loss.backward()                # backprop
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()               # update weights
+    
+                total_loss += loss.item()
+            except:
+                log(f"Error in training data {x_batch.shape} {y_batch.shape}")
 
         train_loss = total_loss / len(train_loader)
 
@@ -286,7 +295,7 @@ if __name__ == "__main__":
 #-----------data----------------
 
 class StreamingPointCloudDataset(IterableDataset):
-    def __init__(self,batch_size = 64,n_batches = 1000,seq_len = 1024):
+    def __init__(self,batch_size = 64,n_batches = 10,seq_len = 1024):
         super().__init__()
         # Initialize any state needed for streaming data here
         self.batch_size = batch_size
@@ -317,6 +326,7 @@ class StreamingPointCloudDataset(IterableDataset):
         return self.n_batches
 
     def get_dataset(self):
+        print(".",end="")
         file = random.choice(self.files_list)
         las_file_path, dtm_file_path, geometry = file
         dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
@@ -346,6 +356,8 @@ class StreamingPointCloudDataset(IterableDataset):
             yield dataset
 
 
+
+
 if __name__ == "__main1__":
     n_patches = 34
     points_per_patch = 1024 
@@ -367,10 +379,16 @@ if __name__ == "__main1__":
             files_list.append((las_file_path,dtm_file_path,geometry))
 
     
+#%% Testing    
+if __name__ == "__main1__":
+    train_set = StreamingPointCloudDataset()
+    for ds1 in train_set:
+        x,y = ds1
+    
     
     
 
-# ─── Training ─────────────────────────────────────────────────────────────
+#%% ─── Training ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":  
     DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
     BATCH_SIZE = 64
@@ -386,7 +404,8 @@ if __name__ == "__main__":
     )
     '''
     train_set = StreamingPointCloudDataset()
-    val_set = StreamingPointCloudDataset(n_batches=10)
+    val_set = StreamingPointCloudDataset()
+    
     
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE)
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE)
@@ -401,7 +420,7 @@ if __name__ == "__main__":
 
 
 # ── Quick demo ────────────────────────────────────────────────────────────────
-if __name__ == "__main__":  
+if __name__ == "__main1__":  
     model.eval()
     with torch.no_grad():
         output = model(x)
