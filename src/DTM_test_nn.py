@@ -102,16 +102,7 @@ class PatchNormaliser(nn.Module):
     """
     Normalises each channel of a patch independently across all points,
     then denormalises using the saved statistics.
-
-    Operates per-sample (not batch-wide) so each patch gets its own μ/σ.
-    This is important: different patches from different scenes have
-    different scales, and you don't want one scene's outliers to
-    distort another's normalisation.
-
-    Input:  (batch, seq_len, n_features)
-    Output: (batch, seq_len, n_features)  — same shape, different scale
     """
-
     def __init__(self, eps: float = 1e-8):
         super().__init__()
         self.eps = eps
@@ -127,20 +118,17 @@ class PatchNormaliser(nn.Module):
         """
         self.mu    = x.mean(dim=1, keepdim=True)   # mean over N points
         self.sigma = x.std(dim=1, keepdim=True) + self.eps
+        #breakpoint()
         #self.mu[3:] = np.mean(self.mu[3:])
         #self.sigma[3:] = np.mean(self.sigma[3:]) 
-        rgbi_mu = self.mu[:,:,3:].mean(axis=2)
-        rgbi_sigma = self.sigma[:,:,3:].max(axis=2)
-        for idx in range(3,7):
-            self.mu[:,:,idx] = rgbi_mu[:,0]
+        #rgbi_mu = self.mu[:,:,3:].mean(axis=2)
+        #rgbi_sigma = self.sigma[:,:,3:].max(axis=2)
         #rgb1_sigma = np.max(self.sigma[3:])
         #self.mu[3:] = rgbi_mu
         #self.sigma[3:] = rgb1_sigma
-        #breakpoint()
+        self.mu[:,:,3:] = self.mu[:,:,3:].mean()
+        self.sigma[:,:,3:] = self.sigma[:,:,3:].max()
         
-        for idx in range(3,7):
-            self.mu[:,:,3] = self.
-
 
         x_norm = (x - self.mu) / self.sigma
         return x_norm 
@@ -234,7 +222,7 @@ def train(
 ):
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
     #criterion = nn.MSELoss()
     #criterion = nn.SmoothL1Loss(beta=1.0)
     #criterion = nn.HuberLoss(delta=1.0)
@@ -398,7 +386,7 @@ if __name__ == "__main1__":
 if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
-        d_model=32,
+        d_model=128,
         n_heads=4,
         n_layers=2,
         d_ff=128,
