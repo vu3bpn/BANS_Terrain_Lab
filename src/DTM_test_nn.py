@@ -129,6 +129,17 @@ class PatchNormaliser(nn.Module):
         self.sigma = x.std(dim=1, keepdim=True) + self.eps
         #self.mu[3:] = np.mean(self.mu[3:])
         #self.sigma[3:] = np.mean(self.sigma[3:]) 
+        rgbi_mu = self.mu[:,:,3:].mean(axis=2)
+        rgbi_sigma = self.sigma[:,:,3:].max(axis=2)
+        for idx in range(3,7):
+            self.mu[:,:,idx] = rgbi_mu[:,0]
+        #rgb1_sigma = np.max(self.sigma[3:])
+        #self.mu[3:] = rgbi_mu
+        #self.sigma[3:] = rgb1_sigma
+        #breakpoint()
+        
+        for idx in range(3,7):
+            self.mu[:,:,3] = self.
 
 
         x_norm = (x - self.mu) / self.sigma
@@ -223,8 +234,11 @@ def train(
 ):
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
-    criterion = nn.MSELoss()
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    #criterion = nn.MSELoss()
+    #criterion = nn.SmoothL1Loss(beta=1.0)
+    #criterion = nn.HuberLoss(delta=1.0)
+    criterion = nn.L1Loss()
 
     history_dict = {"train_loss": [], "val_loss": []}
 
@@ -286,17 +300,7 @@ def load_checkpoint(model, path="checkpoint.pt"):
 
 
 
-#--------------model---------------
-if __name__ == "__main__":
-    model = Transformer7D(
-        input_dim=7,
-        d_model=128,
-        n_heads=4,
-        n_layers=2,
-        d_ff=128,
-        dropout=0.1,
-        )
-    
+
 
 #-----------data----------------
 
@@ -360,12 +364,10 @@ class StreamingPointCloudDataset(IterableDataset):
         center_idx = random.sample(range(len(dsm_df)),1)[0]
         center_point = dsm_df.iloc[center_idx][["X","Y"]]
         dist, tree_idx = tree.query(center_point, k=self.seq_len)
-        try:
-            dsm_data = dsm_df.iloc[tree_idx]
-            dtm_data =  dtm_df.iloc[tree_idx]
-        except:
-            print(f"Error")
-            breakpoint()      
+        
+        dsm_data = dsm_df.iloc[tree_idx]
+        dtm_data =  dtm_df.iloc[tree_idx]
+           
         input_dataset = np.array(dsm_data[self.selected_cols])
         target_dataset = np.array(dtm_data[self.selected_cols])
         return torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32)
@@ -392,11 +394,24 @@ if __name__ == "__main1__":
         print(x.shape,y.shape)
     
     
+#--------------model---------------
+if __name__ == "__main__":
+    model = Transformer7D(
+        input_dim=7,
+        d_model=32,
+        n_heads=4,
+        n_layers=2,
+        d_ff=128,
+        dropout=0.1,
+        )
     
+
+
 
 #%% ─── Training ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":  
-    DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
+    #DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
+    DEVICE     = "cpu"
     BATCH_SIZE = 64
     N_EPOCHS   = 1000
     INPUT_DIM  = 7

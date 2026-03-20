@@ -40,7 +40,7 @@ chunk_size = 1_000_000  # chunk size for reading las file
 subset_n  = 10
 
 las_vect_dict = {"64334_2H_(REFLIGHT)_POINT_CLOUD.las":"rajastan_64334_2h.shp"}
-dtm_model_name = "DTM_transformer_model"
+dtm_model_name = "DTM_transformer_model.mdl"
 dtm_model_path = os.path.join(model_dir,dtm_model_name)
 
 
