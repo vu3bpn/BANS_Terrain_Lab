@@ -24,6 +24,9 @@ from config import *
 from misc_utilities import *
 
 
+
+
+
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model: int, n_heads: int):
         super().__init__()
@@ -110,7 +113,7 @@ class PatchNormaliser(nn.Module):
         self.sigma = 1
         
 
-    def normalise(self, x: torch.Tensor):
+    def normalise(self, x):
         """
         x: (B, N, F)
         Returns normalised x, and the statistics needed to undo it.
@@ -118,18 +121,8 @@ class PatchNormaliser(nn.Module):
         """
         self.mu    = x.mean(dim=1, keepdim=True)   # mean over N points
         self.sigma = x.std(dim=1, keepdim=True) + self.eps
-        #breakpoint()
-        #self.mu[3:] = np.mean(self.mu[3:])
-        #self.sigma[3:] = np.mean(self.sigma[3:]) 
-        #rgbi_mu = self.mu[:,:,3:].mean(axis=2)
-        #rgbi_sigma = self.sigma[:,:,3:].max(axis=2)
-        #rgb1_sigma = np.max(self.sigma[3:])
-        #self.mu[3:] = rgbi_mu
-        #self.sigma[3:] = rgb1_sigma
         self.mu[:,:,3:] = self.mu[:,:,3:].mean()
-        self.sigma[:,:,3:] = self.sigma[:,:,3:].max()
-        
-
+        self.sigma[:,:,3:] = self.sigma[:,:,3:].max()       
         x_norm = (x - self.mu) / self.sigma
         return x_norm 
 
@@ -296,6 +289,7 @@ def align_by_nearest(df1,df2,x="X",y="Y"):
     coords1 = df1[[x,y]].to_numpy(dtype=float)
     coords2 = df2[[x,y]].to_numpy(dtype=float)
     tree = spatial.cKDTree(coords2)
+    
     distances, indices = tree.query(coords1, k=1)
     df2_matched = (
         df2.iloc[indices]
@@ -310,7 +304,7 @@ class StreamingPointCloudDataset(IterableDataset):
         self.n_batches = n_batches
         self.seq_len = seq_len
         self.files_list = []
-        self.selected_cols = ["X","Y","Z","red","green","blue","intensity"]    
+        self.selected_cols = DTM_selected_cols    
         self.read_files()
 
 
@@ -339,10 +333,23 @@ class StreamingPointCloudDataset(IterableDataset):
         dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
         dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
         dtm_df = pandas.DataFrame(dtm_record.array)
+        
         dsm_df = pandas.DataFrame(dsm_record.array)
+        
+        dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
+        dtm_df['Y'] = dtm_df['Y']*dtm_header.scales[1] + dtm_header.offsets[1]
+        dtm_df['Z'] = dtm_df['Z']*dtm_header.scales[2] + dtm_header.offsets[2]
+        
+        dsm_df['X'] = dsm_df['X']*dsm_header.scales[0] + dsm_header.offsets[0]
+        dsm_df['Y'] = dsm_df['Y']*dsm_header.scales[1] + dsm_header.offsets[1]
+        dsm_df['Z'] = dsm_df['Z']*dsm_header.scales[2] + dsm_header.offsets[2]
+        
         dsm_df = align_by_nearest(dtm_df,dsm_df)
+        dtm_df.to_csv(os.path.join(debug_csv_dir,"DTM_df.csv"))
+        dsm_df.to_csv(os.path.join(debug_csv_dir,"DSM_df.csv"))
         xy = dtm_df[["X","Y"]]        
         tree = spatial.cKDTree(xy)
+        #breakpoint()
         return dtm_df,dsm_df,tree
 
     def get_dataset(self):
@@ -358,14 +365,15 @@ class StreamingPointCloudDataset(IterableDataset):
            
         input_dataset = np.array(dsm_data[self.selected_cols])
         target_dataset = np.array(dtm_data[self.selected_cols])
-        return torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32)
+        return input_dataset,target_dataset
        
         
 
     def __iter__(self):
         batches = range(self.n_batches)  
         for batch in batches:
-            dataset = self.get_dataset()
+            x,y = self.get_dataset()
+            dataset = torch.tensor(x,dtype=torch.float32),torch.tensor(y,dtype=torch.float32)
             #print(dataset.shape)
             yield dataset
 
@@ -376,9 +384,13 @@ class StreamingPointCloudDataset(IterableDataset):
     
 #%% Testing    
 if __name__ == "__main1__":
+    DTM_selected_cols = ["X","Y","Z","red","green","blue","intensity"]
     train_set = StreamingPointCloudDataset()
-    for ds1 in train_set:
+    for idx1 in range(5):
+        ds1 = train_set.get_dataset()
         x,y = ds1
+        df1 = pandas.DataFrame(x,columns=DTM_selected_cols)
+        df1.to_csv(os.path.join(debug_csv_dir,f"sample_training_vect_{idx1}.csv"))
         print(x.shape,y.shape)
     
     
@@ -401,7 +413,7 @@ if __name__ == "__main__":
     #DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
     DEVICE     = "cpu"
     BATCH_SIZE = 64
-    N_EPOCHS   = 1000
+    N_EPOCHS   = 100
     INPUT_DIM  = 7
     log(f"Device: {DEVICE}")
     
@@ -425,7 +437,6 @@ if __name__ == "__main__":
     
     history_dict = train(model, train_loader, val_loader,
                     n_epochs=N_EPOCHS, lr=1e-1, device=DEVICE)
-
     # Save
     save_checkpoint(model,dtm_model_path)
 

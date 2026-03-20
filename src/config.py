@@ -38,6 +38,8 @@ dtm_resolution = 0.1
 pipeline_cuncurrent_jobs = 2
 chunk_size = 1_000_000  # chunk size for reading las file
 subset_n  = 10
+DTM_selected_cols = ["X","Y","Z","red","green","blue","intensity"]
+
 
 las_vect_dict = {"64334_2H_(REFLIGHT)_POINT_CLOUD.las":"rajastan_64334_2h.shp"}
 dtm_model_name = "DTM_transformer_model.mdl"
