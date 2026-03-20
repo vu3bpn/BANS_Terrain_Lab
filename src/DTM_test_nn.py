@@ -18,6 +18,8 @@ import pandas
 import os
 import random
 import numpy as np
+from functools import lru_cache
+import ipdb
 from config import *
 from misc_utilities import *
 
@@ -113,6 +115,9 @@ class PatchNormaliser(nn.Module):
     def __init__(self, eps: float = 1e-8):
         super().__init__()
         self.eps = eps
+        self.mu = 1
+        self.sigma = 1
+        
 
     def normalise(self, x: torch.Tensor):
         """
@@ -120,15 +125,18 @@ class PatchNormaliser(nn.Module):
         Returns normalised x, and the statistics needed to undo it.
         μ, σ: (B, 1, F)  — one value per sample per feature channel
         """
-        mu    = x.mean(dim=1, keepdim=True)   # mean over N points
-        sigma = x.std(dim=1, keepdim=True) + self.eps
-        x_norm = (x - mu) / sigma
-        return x_norm, mu, sigma
+        self.mu    = x.mean(dim=1, keepdim=True)   # mean over N points
+        self.sigma = x.std(dim=1, keepdim=True) + self.eps
+        #self.mu[3:] = np.mean(self.mu[3:])
+        #self.sigma[3:] = np.mean(self.sigma[3:]) 
 
-    def denormalise(self, x_norm: torch.Tensor,
-                    mu: torch.Tensor, sigma: torch.Tensor):
+
+        x_norm = (x - self.mu) / self.sigma
+        return x_norm 
+
+    def denormalise(self, x_norm):
         """Reverse the normalisation using saved μ and σ."""
-        return x_norm * sigma + mu
+        return x_norm * self.sigma + self.mu
 
     def forward(self, x):
         """
@@ -193,15 +201,12 @@ class Transformer7D(nn.Module):
         Returns:
             Tensor of shape (batch_size, seq_len, 7)
         """
-        x, mu, sigma = self.norm(x)  # normalise input
-
+        x  = self.norm(x)  # normalise input
         x = self.embedding(x)           # (batch, seq_len, d_model)
-
         for layer in self.layers:
             x = layer(x, mask)          # (batch, seq_len, d_model)
-
         x = self.output_projection(x)  # (batch, seq_len, 7)
-        x = self.norm.denormalise(x, mu, sigma)  # denormalise output
+        x = self.norm.denormalise(x)  # denormalise output
         return x
 
 
@@ -212,7 +217,7 @@ def train(
     model,
     train_loader,
     val_loader,
-    n_epochs=20,
+    n_epochs=2,
     lr=1e-3,
     device="cpu",
 ):
@@ -221,25 +226,21 @@ def train(
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
     criterion = nn.MSELoss()
 
-    history = {"train_loss": [], "val_loss": []}
+    history_dict = {"train_loss": [], "val_loss": []}
 
     for epoch in range(1, n_epochs + 1):
         # ── train ──
         model.train()
         total_loss = 0.0
         for x_batch, y_batch in train_loader:
-            try:
-                x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-                optimizer.zero_grad()          # clear old gradients
-                pred = model(x_batch)          # forward pass → (batch, seq, 7)
-                loss = criterion(pred, y_batch)  # compute MSE
-                loss.backward()                # backprop
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                optimizer.step()               # update weights
-    
-                total_loss += loss.item()
-            except:
-                log(f"Error in training data {x_batch.shape} {y_batch.shape}")
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            optimizer.zero_grad()          # clear old gradients
+            pred = model(x_batch)          # forward pass → (batch, seq, 7)
+            loss = criterion(pred, y_batch)  # compute MSE
+            loss.backward()                # backprop
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()               # update weights
+            total_loss += loss.item()
 
         train_loss = total_loss / len(train_loader)
 
@@ -248,22 +249,27 @@ def train(
         val_loss = 0.0
         with torch.no_grad():
             for x_batch, y_batch in val_loader:
-                x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-                pred = model(x_batch)
-                val_loss += criterion(pred, y_batch).item()
+                try:
+                    x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+                    pred = model(x_batch)
+                    val_loss += criterion(pred, y_batch).item()
+                except Exception as e:   
+                    log(f"Error in validating data {x_batch.shape} {y_batch.shape}")
+                    print(f"{e}")
+                    
         val_loss /= len(val_loader)
 
         scheduler.step()
 
-        history["train_loss"].append(train_loss)
-        history["val_loss"].append(val_loss)
+        history_dict["train_loss"].append(train_loss)
+        history_dict["val_loss"].append(val_loss)
 
         if epoch % 5 == 0 or epoch == 1:
             print(f"Epoch {epoch:3d}/{n_epochs}  "
                   f"train_loss={train_loss:.4f}  val_loss={val_loss:.4f}  "
                   f"lr={scheduler.get_last_lr()[0]:.2e}")
 
-    return history
+    return history_dict
 
 
 # ── 3. Save & load helpers ────────────────────────────────────────────────────
@@ -283,8 +289,8 @@ def load_checkpoint(model, path="checkpoint.pt"):
 #--------------model---------------
 if __name__ == "__main__":
     model = Transformer7D(
-        input_dim=6,
-        d_model=32,
+        input_dim=7,
+        d_model=128,
         n_heads=4,
         n_layers=2,
         d_ff=128,
@@ -294,15 +300,25 @@ if __name__ == "__main__":
 
 #-----------data----------------
 
+def align_by_nearest(df1,df2,x="X",y="Y"):
+    coords1 = df1[[x,y]].to_numpy(dtype=float)
+    coords2 = df2[[x,y]].to_numpy(dtype=float)
+    tree = spatial.cKDTree(coords2)
+    distances, indices = tree.query(coords1, k=1)
+    df2_matched = (
+        df2.iloc[indices]
+           .reset_index(drop=True)
+    )
+    return df2_matched
+
 class StreamingPointCloudDataset(IterableDataset):
-    def __init__(self,batch_size = 64,n_batches = 10,seq_len = 1024):
+    def __init__(self,batch_size = 64,n_batches = 32,seq_len = 1024):
         super().__init__()
-        # Initialize any state needed for streaming data here
         self.batch_size = batch_size
         self.n_batches = n_batches
         self.seq_len = seq_len
         self.files_list = []
-        self.selected_cols = ["X","Y","Z","intensity","red","green","blue"]    
+        self.selected_cols = ["X","Y","Z","red","green","blue","intensity"]    
         self.read_files()
 
 
@@ -324,59 +340,48 @@ class StreamingPointCloudDataset(IterableDataset):
 
     def __len__(self):
         return self.n_batches
-
-    def get_dataset(self):
-        print(".",end="")
-        file = random.choice(self.files_list)
-        las_file_path, dtm_file_path, geometry = file
+    
+    @lru_cache(maxsize=5)
+    def get_df_tree(self,file_tuple):
+        las_file_path, dtm_file_path, geometry = file_tuple
         dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
         dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
         dtm_df = pandas.DataFrame(dtm_record.array)
         dsm_df = pandas.DataFrame(dsm_record.array)
-        xy = dsm_df[["X","Y"]]
+        dsm_df = align_by_nearest(dtm_df,dsm_df)
+        xy = dtm_df[["X","Y"]]        
         tree = spatial.cKDTree(xy)
-        def get_patch(center):
-            _, idx = tree.query(center, k=self.seq_len)
-            return dsm_df.iloc[idx], dtm_df.iloc[idx]
+        return dtm_df,dsm_df,tree
 
-        center_points = random.sample(range(len(dsm_df)), self.batch_size)
-        patches = [get_patch(dsm_df.iloc[center][["X","Y"]]) for center in center_points]        
-        input_dataset = [np.array(patch[0][self.selected_cols]) for patch in patches]
-        target_dataset = [np.array(patch[1][self.selected_cols]) for patch in patches]            
-                    
-        dataset = TensorDataset(torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32))
-        return dataset
+    def get_dataset(self):
+        file_tuple = random.choice(self.files_list)
+        dtm_df,dsm_df,tree = self.get_df_tree(file_tuple)
+        
+        center_idx = random.sample(range(len(dsm_df)),1)[0]
+        center_point = dsm_df.iloc[center_idx][["X","Y"]]
+        dist, tree_idx = tree.query(center_point, k=self.seq_len)
+        try:
+            dsm_data = dsm_df.iloc[tree_idx]
+            dtm_data =  dtm_df.iloc[tree_idx]
+        except:
+            print(f"Error")
+            breakpoint()      
+        input_dataset = np.array(dsm_data[self.selected_cols])
+        target_dataset = np.array(dtm_data[self.selected_cols])
+        return torch.tensor(input_dataset,dtype=torch.float32),torch.tensor(target_dataset,dtype=torch.float32)
+       
+        
 
     def __iter__(self):
-        # Implement logic to stream data in batches here
-        # For example, read from files or generate data on the fly
-        batches = range(self.n_batches)  # Placeholder for actual data streaming logic
+        batches = range(self.n_batches)  
         for batch in batches:
             dataset = self.get_dataset()
+            #print(dataset.shape)
             yield dataset
 
 
 
 
-if __name__ == "__main1__":
-    n_patches = 34
-    points_per_patch = 1024 
-    selected_cols = ["X","Y","Z","intensity","red","green","blue"]    
-    data_info_df = pandas.read_csv(data_info_file)
-    filename_paths = {os.path.split(x)[-1]:x for x in data_info_df['filename']}
-    files_list = []
-    for las_file in las_vect_dict:
-        vect_file = las_vect_dict[las_file]
-        shapefile_path = os.path.join(vector_dir,vect_file)
-        las_file_path = filename_paths[las_file]
-        las_file_name = os.path.splitext(las_file)[0]
-        dtm_file = las_file_name+"_dtm.las"
-        dtm_file_path = os.path.join(dtm_dir,dtm_file)
-        gdf = geopandas.read_file(shapefile_path)
-        for row1 in gdf.iterrows():
-            id = row1[1]['id']
-            geometry = row1[1].geometry
-            files_list.append((las_file_path,dtm_file_path,geometry))
 
     
 #%% Testing    
@@ -384,6 +389,7 @@ if __name__ == "__main1__":
     train_set = StreamingPointCloudDataset()
     for ds1 in train_set:
         x,y = ds1
+        print(x.shape,y.shape)
     
     
     
@@ -392,8 +398,7 @@ if __name__ == "__main1__":
 if __name__ == "__main__":  
     DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
     BATCH_SIZE = 64
-    N_EPOCHS   = 30
-    SEQ_LEN    = 10
+    N_EPOCHS   = 1000
     INPUT_DIM  = 7
     log(f"Device: {DEVICE}")
     
@@ -409,12 +414,17 @@ if __name__ == "__main__":
     
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE)
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE)
+    print("Training")
+
     
-    history = train(model, train_loader, val_loader,
-                    n_epochs=N_EPOCHS, lr=1e-3, device=DEVICE)
+    if os.path.exists(dtm_model_path):
+        load_checkpoint(model, dtm_model_path)
+    
+    history_dict = train(model, train_loader, val_loader,
+                    n_epochs=N_EPOCHS, lr=1e-1, device=DEVICE)
 
     # Save
-    save_checkpoint(model, "transformer7d_checkpoint.pt")
+    save_checkpoint(model,dtm_model_path)
 
     
 

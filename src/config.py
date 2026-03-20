@@ -18,6 +18,7 @@ split_files_subset_dir = os.path.join(input_dir,"split_files")
 copc_dir = os.path.join(input_dir,"copc")
 output_dir = os.path.join(data_dir,"output")
 vector_dir = os.path.join(input_dir,"vectors")
+model_dir = os.path.join(output_dir,"models")
 
 
 #%% Input files
@@ -39,6 +40,8 @@ chunk_size = 1_000_000  # chunk size for reading las file
 subset_n  = 10
 
 las_vect_dict = {"64334_2H_(REFLIGHT)_POINT_CLOUD.las":"rajastan_64334_2h.shp"}
+dtm_model_name = "DTM_transformer_model"
+dtm_model_path = os.path.join(model_dir,dtm_model_name)
 
 
 #%%
@@ -60,7 +63,8 @@ required_dirs = [
         copc_dir,
         fixed_window_subset_dir,
         split_files_subset_dir,
-        output_dir
+        output_dir,
+        model_dir
         ]
     
 for dir1 in required_dirs:
