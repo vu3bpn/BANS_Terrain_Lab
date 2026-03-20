@@ -431,14 +431,14 @@ if __name__ == "__main__":
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE)
     print("Training")
 
-    
-    if os.path.exists(dtm_model_path):
-        load_checkpoint(model, dtm_model_path)
-    
-    history_dict = train(model, train_loader, val_loader,
-                    n_epochs=N_EPOCHS, lr=1e-1, device=DEVICE)
-    # Save
-    save_checkpoint(model,dtm_model_path)
+    for idx in range(1000):    
+        if os.path.exists(dtm_model_path):
+            model = load_checkpoint(model, dtm_model_path)
+        
+        history_dict = train(model, train_loader, val_loader,
+                        n_epochs=N_EPOCHS, lr=5e-1, device=DEVICE)
+        # Save
+        save_checkpoint(model,dtm_model_path)
 
     
 
