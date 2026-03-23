@@ -21,6 +21,7 @@ vector_dir = os.path.join(input_dir,"vectors")
 model_dir = os.path.join(output_dir,"models")
 
 
+
 #%% Input files
 data_url_list_filename = os.path.join(input_dir,"data_links.txt")
 logfile = os.path.join(data_dir,"run_log.txt")

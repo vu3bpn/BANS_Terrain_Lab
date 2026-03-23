@@ -67,25 +67,26 @@ if __name__ == "__main__":
             dsm_debug_file = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{id}.las")
             terrain_debug_file = os.path.join(debug_dir,f"terrain_debug_{las_file_name}_id_{id}.las")
             
+            '''
             dtm_debug_csv_file = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{id}.csv")
             dsm_debug_csv_file = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{id}.csv")
             terrain_debug_csv_file = os.path.join(debug_dir,f"terrain_debug_{las_file_name}_id_{id}.csv")
-            
+            '''
             
             geometry = row1[1].geometry
             dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)            
             df = pandas.DataFrame(dtm_record.array)            
             df_to_las(df,dtm_header,terrain_debug_file)
-            df.to_csv(terrain_debug_csv_file)
+            #df.to_csv(terrain_debug_csv_file)
             
             
             filled_df = knn_fill(df,k=50,measure='min')            
             df_to_las(filled_df,dtm_header,dtm_debug_file)
-            filled_df.to_csv(dtm_debug_csv_file)
+            #filled_df.to_csv(dtm_debug_csv_file)
 
             dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
             dsm_df = pandas.DataFrame(dsm_record.array)
-            dsm_df.to_csv(dsm_debug_csv_file)
+            #dsm_df.to_csv(dsm_debug_csv_file)
             #df_to_las(dsm_df,dsm_header,dsm_debug_file)
             
             with laspy.open(dsm_debug_file, mode='w', header=dsm_header) as writer:

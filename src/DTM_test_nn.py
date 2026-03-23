@@ -333,7 +333,7 @@ class StreamingPointCloudDataset(IterableDataset):
         dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
         dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
         dtm_df = pandas.DataFrame(dtm_record.array)
-        
+        dtm_df = knn_fill(dtm_df)
         dsm_df = pandas.DataFrame(dsm_record.array)
         
         dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
@@ -344,11 +344,11 @@ class StreamingPointCloudDataset(IterableDataset):
         dsm_df['Y'] = dsm_df['Y']*dsm_header.scales[1] + dsm_header.offsets[1]
         dsm_df['Z'] = dsm_df['Z']*dsm_header.scales[2] + dsm_header.offsets[2]
         
-        dsm_df = align_by_nearest(dtm_df,dsm_df)
+        #dsm_df = align_by_nearest(dtm_df,dsm_df)
         dtm_df.to_csv(os.path.join(debug_csv_dir,"DTM_df.csv"))
         dsm_df.to_csv(os.path.join(debug_csv_dir,"DSM_df.csv"))
         xy = dtm_df[["X","Y"]]        
-        tree = spatial.cKDTree(xy)
+        tree = spatial.cKDTree(xy,copy_data=True)
         #breakpoint()
         return dtm_df,dsm_df,tree
 
@@ -383,7 +383,7 @@ class StreamingPointCloudDataset(IterableDataset):
 
     
 #%% Testing    
-if __name__ == "__main1__":
+if __name__ == "__main__":
     DTM_selected_cols = ["X","Y","Z","red","green","blue","intensity"]
     train_set = StreamingPointCloudDataset()
     for idx1 in range(5):
@@ -391,6 +391,9 @@ if __name__ == "__main1__":
         x,y = ds1
         df1 = pandas.DataFrame(x,columns=DTM_selected_cols)
         df1.to_csv(os.path.join(debug_csv_dir,f"sample_training_vect_{idx1}.csv"))
+        
+        df2 = pandas.DataFrame(y,columns=DTM_selected_cols)
+        df2.to_csv(os.path.join(debug_csv_dir,f"sample_reference_vect_{idx1}.csv"))
         print(x.shape,y.shape)
     
     
@@ -409,7 +412,7 @@ if __name__ == "__main__":
 
 
 #%% ─── Training ─────────────────────────────────────────────────────────────
-if __name__ == "__main__":  
+if __name__ == "__main1__":  
     #DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
     DEVICE     = "cpu"
     BATCH_SIZE = 64
@@ -444,7 +447,7 @@ if __name__ == "__main__":
 
 
 # ── Evaluate ────────────────────────────────────────────────────────────────
-if __name__ == "__main__":  
+if __name__ == "__main1__":  
     model.eval()
     with torch.no_grad():
         output = model(x)
