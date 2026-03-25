@@ -286,15 +286,17 @@ def load_checkpoint(model, path="checkpoint.pt"):
 #-----------data----------------
 
 def align_by_nearest(df1,df2,x="X",y="Y"):
+    '''df2 points to be rearranged 
+       df1 reference points''' 
     coords1 = df1[[x,y]].to_numpy(dtype=float)
     coords2 = df2[[x,y]].to_numpy(dtype=float)
     tree = spatial.cKDTree(coords2)
     
     distances, indices = tree.query(coords1, k=1)
     df2_matched = (
-        df2.iloc[indices]
-           .reset_index(drop=True)
-    )
+                    df2.iloc[indices]
+                    .reset_index(drop=True)
+                    )
     return df2_matched
 
 class StreamingPointCloudDataset(IterableDataset):
@@ -320,21 +322,33 @@ class StreamingPointCloudDataset(IterableDataset):
             dtm_file_path = os.path.join(dtm_dir,dtm_file)
             gdf = geopandas.read_file(shapefile_path)
             for row1 in gdf.iterrows():
-                id = row1[1]['id']
-                geometry = row1[1].geometry
-                self.files_list.append((las_file_path,dtm_file_path,geometry))
+                gdf_id = row1[1]['id']
+                geometry = row1[1].geometry                
+                input_file_path = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{gdf_id}.las")
+                target_file_path = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{gdf_id}.las")
+                self.files_list.append((input_file_path,target_file_path,geometry,gdf_id))
 
     def __len__(self):
         return self.n_batches
     
     @lru_cache(maxsize=5)
     def get_df_tree(self,file_tuple):
-        las_file_path, dtm_file_path, geometry = file_tuple
-        dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
-        dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
+        las_file_path, dtm_file_path, geometry,gdf_id = file_tuple
+        #dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
+        #dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
+        dsm_file = laspy.read(las_file_path)
+        dtm_file = laspy.read(dtm_file_path)
+        dsm_record = dsm_file.points
+        dsm_header = dsm_file.header
+        dtm_record = dtm_file.points
+        dtm_header = dtm_file.header
+        
+        
+        
         dtm_df = pandas.DataFrame(dtm_record.array)
-        dtm_df = knn_fill(dtm_df)
+        #dtm_df = knn_fill(dtm_df)
         dsm_df = pandas.DataFrame(dsm_record.array)
+        
         
         dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
         dtm_df['Y'] = dtm_df['Y']*dtm_header.scales[1] + dtm_header.offsets[1]
@@ -344,9 +358,11 @@ class StreamingPointCloudDataset(IterableDataset):
         dsm_df['Y'] = dsm_df['Y']*dsm_header.scales[1] + dsm_header.offsets[1]
         dsm_df['Z'] = dsm_df['Z']*dsm_header.scales[2] + dsm_header.offsets[2]
         
-        #dsm_df = align_by_nearest(dtm_df,dsm_df)
-        dtm_df.to_csv(os.path.join(debug_csv_dir,"DTM_df.csv"))
-        dsm_df.to_csv(os.path.join(debug_csv_dir,"DSM_df.csv"))
+        
+        dtm_df = align_by_nearest(dsm_df,dtm_df)
+        
+        dtm_df.to_csv(os.path.join(debug_csv_dir,f"DTM_df_{gdf_id}.csv"))
+        dsm_df.to_csv(os.path.join(debug_csv_dir,f"DSM_df_{gdf_id}.csv"))
         xy = dtm_df[["X","Y"]]        
         tree = spatial.cKDTree(xy,copy_data=True)
         #breakpoint()
@@ -398,7 +414,7 @@ if __name__ == "__main__":
     
     
 #--------------model---------------
-if __name__ == "__main__":
+if __name__ == "__main1__":
     model = Transformer7D(
         input_dim=7,
         d_model=128,
