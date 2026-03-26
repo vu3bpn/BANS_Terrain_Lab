@@ -10,7 +10,7 @@ from scipy import spatial
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, IterableDataset
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KDTree
 
 import math
 import geopandas
@@ -20,6 +20,7 @@ import random
 import numpy as np
 from functools import lru_cache
 import ipdb
+from copy import deepcopy
 from config import *
 from misc_utilities import *
 
@@ -120,15 +121,21 @@ class PatchNormaliser(nn.Module):
         μ, σ: (B, 1, F)  — one value per sample per feature channel
         """
         self.mu    = x.mean(dim=1, keepdim=True)   # mean over N points
-        self.sigma = x.std(dim=1, keepdim=True) + self.eps
-        self.mu[:,:,3:] = self.mu[:,:,3:].mean()
-        self.sigma[:,:,3:] = self.sigma[:,:,3:].max()       
+        #self.sigma = x.std(dim=1, keepdim=True) + self.eps
+        self.sigma = x.std(dim=1, keepdim=True)*0 + 2
+        #self.mu[:,:,3:] = self.mu[:,:,3:].mean()
+        #self.sigma[:,:,3:] = self.sigma[:,:,3:].max()    
+        #self.sigma[:,:,3:] =
+        self.mu[:,:,3:] = 2**15
+        self.sigma[:,:,3:] = 2**15
         x_norm = (x - self.mu) / self.sigma
         return x_norm 
 
     def denormalise(self, x_norm):
         """Reverse the normalisation using saved μ and σ."""
-        return x_norm * self.sigma + self.mu
+        #return x_norm * self.sigma + self.mu
+        
+        return x_norm*self.sigma[:,:,2].reshape((-1,1,1)) + self.mu[:,:,2].reshape((-1,1,1))
 
     def forward(self, x):
         """
@@ -162,10 +169,11 @@ class Transformer7D(nn.Module):
     def __init__(
         self,
         input_dim: int = 7,
+        output_dim: int = 1,
         d_model: int = 32,
-        n_heads: int = 4,
+        n_heads: int = 2,
         n_layers: int = 2,
-        d_ff: int = 128,
+        d_ff: int = 32,
         dropout: float = 0.1,
     ):
         super().__init__()
@@ -182,9 +190,9 @@ class Transformer7D(nn.Module):
         )
 
         # Project d_model → input_dim (back to 7)
-        self.output_projection = nn.Linear(d_model, input_dim)
+        self.output_projection = nn.Linear(d_model, output_dim)
 
-    def forward(self, x: torch.Tensor, mask=None) -> torch.Tensor:
+    def forward(self, x, mask=None) :
         """
         Args:
             x:    Tensor of shape (batch_size, seq_len, 7)
@@ -193,13 +201,16 @@ class Transformer7D(nn.Module):
         Returns:
             Tensor of shape (batch_size, seq_len, 7)
         """
+        
+        z = x[:,:,2:3]
         x  = self.norm(x)  # normalise input
         x = self.embedding(x)           # (batch, seq_len, d_model)
         for layer in self.layers:
             x = layer(x, mask)          # (batch, seq_len, d_model)
         x = self.output_projection(x)  # (batch, seq_len, 7)
         x = self.norm.denormalise(x)  # denormalise output
-        return x
+        
+        return  z -x
 
 
 
@@ -216,10 +227,10 @@ def train(
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
-    #criterion = nn.MSELoss()
+    criterion = nn.MSELoss()
     #criterion = nn.SmoothL1Loss(beta=1.0)
     #criterion = nn.HuberLoss(delta=1.0)
-    criterion = nn.L1Loss()
+    #criterion = nn.L1Loss()
 
     history_dict = {"train_loss": [], "val_loss": []}
 
@@ -288,11 +299,14 @@ def align_by_nearest(df1,df2,x="X",y="Y"):
        df1 reference points''' 
     coords1 = df1[[x,y]].to_numpy(dtype=float)
     coords2 = df2[[x,y]].to_numpy(dtype=float)
-    tree = spatial.cKDTree(coords2)
+    #tree = spatial.cKDTree(coords2)
+    tree = KDTree(coords2)
     
     distances, indices = tree.query(coords1, k=1)
+    
+    
     df2_matched = (
-                    df2.iloc[indices]
+                    df2.iloc[indices.flatten()]
                     .reset_index(drop=True)
                     )
     return df2_matched
@@ -362,7 +376,8 @@ class StreamingPointCloudDataset(IterableDataset):
         dtm_df.to_csv(os.path.join(debug_csv_dir,f"DTM_df_{gdf_id}.csv"))
         dsm_df.to_csv(os.path.join(debug_csv_dir,f"DSM_df_{gdf_id}.csv"))
         xy = dtm_df[["X","Y"]]        
-        tree = spatial.cKDTree(xy,copy_data=True)
+        #tree = spatial.cKDTree(xy,copy_data=True,metric='l1')
+        tree = KDTree(xy,metric='l1')
         #breakpoint()
         return dtm_df,dsm_df,tree
 
@@ -372,13 +387,15 @@ class StreamingPointCloudDataset(IterableDataset):
         
         center_idx = random.sample(range(len(dsm_df)),1)[0]
         center_point = dsm_df.iloc[center_idx][["X","Y"]]
-        dist, tree_idx = tree.query(center_point, k=self.seq_len)
+        dist, tree_idx = tree.query([center_point], k=self.seq_len)
+        tree_idx = tree_idx.flatten()
         
         dsm_data = dsm_df.iloc[tree_idx]
         dtm_data =  dtm_df.iloc[tree_idx]
            
         input_dataset = np.array(dsm_data[self.selected_cols])
-        target_dataset = np.array(dtm_data[self.selected_cols])
+        #target_dataset = np.array(dtm_data[self.selected_cols])
+        target_dataset = np.array(dtm_data["Z"]).reshape((-1,1))
         return input_dataset,target_dataset
        
         
@@ -404,10 +421,11 @@ if __name__ == "__main1__":
         ds1 = train_set.get_dataset()
         x,y = ds1
         df1 = pandas.DataFrame(x,columns=DTM_selected_cols)
-        df1.to_csv(os.path.join(debug_csv_dir,f"sample_training_vect_{idx1}.csv"))
+        df1.to_csv(os.path.join(debug_csv_dir,f"sample_training_vect_{idx1}.csv"),index=False)
         
-        df2 = pandas.DataFrame(y,columns=DTM_selected_cols)
-        df2.to_csv(os.path.join(debug_csv_dir,f"sample_reference_vect_{idx1}.csv"))
+        df2 =df1
+        df2["Z"] = y
+        df2.to_csv(os.path.join(debug_csv_dir,f"sample_reference_vect_{idx1}.csv"),index=False)
         print(x.shape,y.shape)
     
     
@@ -415,10 +433,11 @@ if __name__ == "__main1__":
 if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
-        d_model=128,
+        output_dim=1,
+        d_model=1024,
         n_heads=4,
         n_layers=2,
-        d_ff=128,
+        d_ff=16,
         dropout=0.1,
         )
     
@@ -426,11 +445,11 @@ if __name__ == "__main__":
 
 
 #%% ─── Training ─────────────────────────────────────────────────────────────
-if __name__ == "__main1__":  
+if __name__ == "__main__":  
     #DEVICE     = "cuda" if torch.cuda.is_available() else "cpu"
     DEVICE     = "cpu"
     BATCH_SIZE = 64
-    N_EPOCHS   = 100
+    N_EPOCHS   = 200
     INPUT_DIM  = 7
     log(f"Device: {DEVICE}")
     
@@ -445,7 +464,7 @@ if __name__ == "__main1__":
     
     
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE)
-    val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE)
+    val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE//4)
     print("Training")
 
     for idx in range(1):    
@@ -471,13 +490,19 @@ if __name__ == "__main__":
     with torch.no_grad():
         for x_batch,y_batch in val_loader:
             y_pred = model(x_batch)
-            y_predict_df = pandas.DataFrame(y_pred[0],columns=DTM_selected_cols)
-            x_df = pandas.DataFrame(x_batch[0],columns=DTM_selected_cols)
-            y_df = pandas.DataFrame(y_batch[0],columns=DTM_selected_cols)
             
             idx+=1
-            y_predict_df.to_csv(os.path.join(debug_dir,f"nn_predicted_{idx}.csv"),index=False)
+            x_df = pandas.DataFrame(x_batch[0],columns=DTM_selected_cols)
             x_df.to_csv(os.path.join(debug_dir,f"nn_input_{idx}.csv"),index=False)
+            y_predict_df = x_df
+            y_predict_df['Z'] = pandas.DataFrame(y_pred[0],columns=["Z"])['Z']
+            #y_predict_df['Z'] = list(y_pred[0])
+            y_predict_df.to_csv(os.path.join(debug_dir,f"nn_predicted_{idx}.csv"),index=False)
+            
+            y_df = x_df
+            y_df['Z'] = pandas.DataFrame(y_batch[0],columns=["Z"])['Z']
+            
+            #y_df['Z'] = list(y_batch[0])
             y_df.to_csv(os.path.join(debug_dir,f"nn_target_{idx}.csv"),index=False)
             
             
