@@ -250,10 +250,8 @@ def train(
                     val_loss += criterion(pred, y_batch).item()
                 except Exception as e:   
                     log(f"Error in validating data {x_batch.shape} {y_batch.shape}")
-                    print(f"{e}")
-                    
+                    print(f"{e}")                    
         val_loss /= len(val_loader)
-
         scheduler.step()
 
         history_dict["train_loss"].append(train_loss)
@@ -399,7 +397,7 @@ class StreamingPointCloudDataset(IterableDataset):
 
     
 #%% Testing    
-if __name__ == "__main__":
+if __name__ == "__main1__":
     DTM_selected_cols = ["X","Y","Z","red","green","blue","intensity"]
     train_set = StreamingPointCloudDataset()
     for idx1 in range(5):
@@ -414,7 +412,7 @@ if __name__ == "__main__":
     
     
 #--------------model---------------
-if __name__ == "__main1__":
+if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
         d_model=128,
@@ -450,7 +448,7 @@ if __name__ == "__main1__":
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE)
     print("Training")
 
-    for idx in range(1000):    
+    for idx in range(1):    
         if os.path.exists(dtm_model_path):
             model = load_checkpoint(model, dtm_model_path)
         
@@ -463,9 +461,25 @@ if __name__ == "__main1__":
 
 
 # ── Evaluate ────────────────────────────────────────────────────────────────
-if __name__ == "__main1__":  
+if __name__ == "__main__":  
+    if os.path.exists(dtm_model_path):
+        model = load_checkpoint(model, dtm_model_path)
     model.eval()
+    val_set = StreamingPointCloudDataset()
+    val_loader   = DataLoader(val_set,   batch_size=1)
+    idx = 0
     with torch.no_grad():
-        output = model(x)
-
+        for x_batch,y_batch in val_loader:
+            y_pred = model(x_batch)
+            y_predict_df = pandas.DataFrame(y_pred[0],columns=DTM_selected_cols)
+            x_df = pandas.DataFrame(x_batch[0],columns=DTM_selected_cols)
+            y_df = pandas.DataFrame(y_batch[0],columns=DTM_selected_cols)
+            
+            idx+=1
+            y_predict_df.to_csv(os.path.join(debug_dir,f"nn_predicted_{idx}.csv"),index=False)
+            x_df.to_csv(os.path.join(debug_dir,f"nn_input_{idx}.csv"),index=False)
+            y_df.to_csv(os.path.join(debug_dir,f"nn_target_{idx}.csv"),index=False)
+            
+            
+        
    
