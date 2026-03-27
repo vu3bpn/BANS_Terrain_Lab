@@ -202,15 +202,18 @@ class Transformer7D(nn.Module):
             Tensor of shape (batch_size, seq_len, 7)
         """
         
-        z = x[:,:,2:3]
+        
         x  = self.norm(x)  # normalise input
+        z = x[:,:,2:3]                  # z connection
         x = self.embedding(x)           # (batch, seq_len, d_model)
         for layer in self.layers:
             x = layer(x, mask)          # (batch, seq_len, d_model)
         x = self.output_projection(x)  # (batch, seq_len, 7)
+        
+        x = z-x                         #z join
         x = self.norm.denormalise(x)  # denormalise output
         
-        return  z -x
+        return  x
 
 
 
@@ -434,7 +437,7 @@ if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
         output_dim=1,
-        d_model=1024,
+        d_model=128,
         n_heads=4,
         n_layers=2,
         d_ff=16,
