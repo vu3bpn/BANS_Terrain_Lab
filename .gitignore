@@ -1,2 +1,6 @@
 data/*
 src/__pycache__/*
+src/*.tif
+src/*.png
+src/*.keras
+src/*.h5
