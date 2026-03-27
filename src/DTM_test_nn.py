@@ -21,6 +21,7 @@ import numpy as np
 from functools import lru_cache
 import ipdb
 from copy import deepcopy
+from torchinfo import summary
 from config import *
 from misc_utilities import *
 
@@ -232,9 +233,9 @@ def train(
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
-    criterion = nn.MSELoss()
+    #criterion = nn.MSELoss()
     #criterion = nn.SmoothL1Loss(beta=1.0)
-    #criterion = nn.HuberLoss(delta=1.0)
+    criterion = nn.HuberLoss(delta=1.0)
     #criterion = nn.L1Loss()
 
     history_dict = {"train_loss": [], "val_loss": []}
@@ -441,12 +442,13 @@ if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
         output_dim=1,
-        d_model=128,
-        n_heads=4,
+        d_model=64,
+        n_heads=32,
         n_layers=2,
-        d_ff=16,
+        d_ff=8,
         dropout=0.1,
         )
+    
     
 
 
@@ -485,6 +487,7 @@ if __name__ == "__main__":
 
     dummy_input = torch.randn(32, 1024, 7)
     torch.onnx.export(model,dummy_input,onnx_model_path)
+    summary(model, input_size=(32, 1024, 7))
 
 # ── Evaluate ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":  

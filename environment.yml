@@ -20,6 +20,9 @@ dependencies:
   - laspy
   - pytorch
   - torchvision
+  - torchinfo
+  - onnx
+  - onnxscript
   - pytorch-cuda=12.2
   - xgboost
   - pyproj

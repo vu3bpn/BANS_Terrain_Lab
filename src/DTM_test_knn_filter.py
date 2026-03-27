@@ -94,7 +94,8 @@ if __name__ == "__main__":
                 filled_df = knn_fill(df,k=50,measure='min')            
                 df_to_las(filled_df,dtm_header,dtm_debug_file)
             else:
-                df_to_las(dsm_df,dsm_header,dtm_debug_file)
+                with laspy.open(dtm_debug_file, mode='w', header=dsm_header) as writer:
+                    writer.write_points(dsm_record)
                 
             #filled_df.to_csv(dtm_debug_csv_file)         
 
