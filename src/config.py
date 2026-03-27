@@ -45,6 +45,7 @@ DTM_selected_cols = ["X","Y","Z","red","green","blue","intensity"]
 las_vect_dict = {"64334_2H_(REFLIGHT)_POINT_CLOUD.las":"rajastan_64334_2h.shp"}
 dtm_model_name = "DTM_transformer_model.mdl"
 dtm_model_path = os.path.join(model_dir,dtm_model_name)
+onnx_model_path = os.path.join(model_dir,dtm_model_name.strip(".mdl")+".onnx")
 
 
 #%%

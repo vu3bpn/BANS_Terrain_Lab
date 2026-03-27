@@ -61,42 +61,45 @@ if __name__ == "__main__":
         dtm_file_path = os.path.join(dtm_dir,dtm_file)
         gdf = geopandas.read_file(shapefile_path)
         for row1 in gdf.iterrows():
-            id = row1[1]['id']
-            
-            dtm_debug_file = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{id}.las")
-            dsm_debug_file = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{id}.las")
-            terrain_debug_file = os.path.join(debug_dir,f"terrain_debug_{las_file_name}_id_{id}.las")
-            
-            '''
-            dtm_debug_csv_file = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{id}.csv")
-            dsm_debug_csv_file = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{id}.csv")
-            terrain_debug_csv_file = os.path.join(debug_dir,f"terrain_debug_{las_file_name}_id_{id}.csv")
-            '''
-            
+            gdf_id = row1[1]['id']
+            gdf_type = row1[1]['type']
             geometry = row1[1].geometry
+            
+            dtm_debug_file = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{gdf_id}.las")
+            dsm_debug_file = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{gdf_id}.las")
+            terrain_debug_file = os.path.join(debug_dir,f"terrain_debug_{las_file_name}_id_{gdf_id}.las")
+            
+            '''
+            dtm_debug_csv_file = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{gdf_id}.csv")
+            dsm_debug_csv_file = os.path.join(debug_dir,f"dsm_debug_{las_file_name}_id_{gdf_id}.csv")
+            terrain_debug_csv_file = os.path.join(debug_dir,f"terrain_debug_{las_file_name}_id_{gdf_id}.csv")
+            '''
+            
+            dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
+            dsm_df = pandas.DataFrame(dsm_record.array)
+            #dsm_df.to_csv(dsm_debug_csv_file)
+            #df_to_las(dsm_df,dsm_header,dsm_debug_file)
+            with laspy.open(dsm_debug_file, mode='w', header=dsm_header) as writer:
+                writer.write_points(dsm_record)
+            
+            
+            
+            
             dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)            
             df = pandas.DataFrame(dtm_record.array)            
             df_to_las(df,dtm_header,terrain_debug_file)
             #df.to_csv(terrain_debug_csv_file)
             
-            
-            filled_df = knn_fill(df,k=50,measure='min')            
-            df_to_las(filled_df,dtm_header,dtm_debug_file)
-            #filled_df.to_csv(dtm_debug_csv_file)
-
-            dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
-            dsm_df = pandas.DataFrame(dsm_record.array)
-            #dsm_df.to_csv(dsm_debug_csv_file)
-            #df_to_las(dsm_df,dsm_header,dsm_debug_file)
-            
-            with laspy.open(dsm_debug_file, mode='w', header=dsm_header) as writer:
-                writer.write_points(dsm_record)
-
+            if gdf_type == 0:
+                filled_df = knn_fill(df,k=50,measure='min')            
+                df_to_las(filled_df,dtm_header,dtm_debug_file)
+            else:
+                df_to_las(dsm_df,dsm_header,dtm_debug_file)
+                
+            #filled_df.to_csv(dtm_debug_csv_file)         
 
             #df_to_las(df,header,terrain_debug_file)
             #df_to_las(dsm_df,header,dsm_debug_file)
-            
-            
             
             #filled_df.to_csv(dtm_debug_csv_file)
             #df.to_csv(terrain_debug_file)

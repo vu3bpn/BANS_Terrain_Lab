@@ -135,7 +135,9 @@ class PatchNormaliser(nn.Module):
         """Reverse the normalisation using saved μ and σ."""
         #return x_norm * self.sigma + self.mu
         
-        return x_norm*self.sigma[:,:,2].reshape((-1,1,1)) + self.mu[:,:,2].reshape((-1,1,1))
+        normalized = x_norm*self.sigma[:,:,2:3] + self.mu[:,:,2:3]
+        #return x_norm*self.sigma[:,:,2].reshape((-1,1,1)) + self.mu[:,:,2].reshape((-1,1,1))
+        return normalized
 
     def forward(self, x):
         """
@@ -171,8 +173,8 @@ class Transformer7D(nn.Module):
         input_dim: int = 7,
         output_dim: int = 1,
         d_model: int = 32,
-        n_heads: int = 2,
-        n_layers: int = 2,
+        n_heads: int = 32,
+        n_layers: int = 32,
         d_ff: int = 32,
         dropout: float = 0.1,
     ):
@@ -283,11 +285,13 @@ def train(
 
 def save_checkpoint(model, path="checkpoint.pt"):
     torch.save(model.state_dict(), path)
-    print(f"Saved to {path}")
+    #torch.save(model,path)
+    print(f"Saved model to {path}")
 
 def load_checkpoint(model, path="checkpoint.pt"):
     model.load_state_dict(torch.load(path, map_location="cpu"))
-    print(f"Loaded from {path}")
+    #model = torch.load(path)
+    print(f"Loaded model from {path}")
     return model
 
 
@@ -432,7 +436,7 @@ if __name__ == "__main1__":
         print(x.shape,y.shape)
     
     
-#--------------model---------------
+#%%--------------model---------------
 if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
@@ -469,18 +473,18 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE)
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE//4)
     print("Training")
+    
+    if os.path.exists(dtm_model_path):
+        model = load_checkpoint(model, dtm_model_path)
 
-    for idx in range(1):    
-        if os.path.exists(dtm_model_path):
-            model = load_checkpoint(model, dtm_model_path)
-        
+    for idx in range(1):   
         history_dict = train(model, train_loader, val_loader,
                         n_epochs=N_EPOCHS, lr=5e-1, device=DEVICE)
         # Save
         save_checkpoint(model,dtm_model_path)
 
-    
-
+    dummy_input = torch.randn(32, 1024, 7)
+    torch.onnx.export(model,dummy_input,onnx_model_path)
 
 # ── Evaluate ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":  
