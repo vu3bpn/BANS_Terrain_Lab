@@ -27,6 +27,7 @@ class StreamingDTMDataset(IterableDataset):
         self.files_list = []
         self.selected_cols = ["X","Y","Z"]  
         self.read_files()
+        self.file_idx = 0
 
 
     def read_files(self):
@@ -52,27 +53,31 @@ class StreamingDTMDataset(IterableDataset):
     @lru_cache(maxsize=5)
     def get_df_tree(self,file_tuple):
         las_file_path, geometry,gdf_id = file_tuple
-        #dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
-        #dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)       
-        dtm_file = laspy.read(las_file_path)
-        dtm_record = dtm_file.points
-        dtm_header = dtm_file.header       
+        dtm_csv_filename = os.path.join(debug_csv_dir,f"DTM_df_{gdf_id}.csv")
         
-        dtm_df = pandas.DataFrame(dtm_record.array)
-        dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
-        dtm_df['Y'] = dtm_df['Y']*dtm_header.scales[1] + dtm_header.offsets[1]
-        dtm_df['Z'] = dtm_df['Z']*dtm_header.scales[2] + dtm_header.offsets[2]       
-     
-     
-        dtm_df.to_csv(os.path.join(debug_csv_dir,f"DTM_df_{gdf_id}.csv"))
+        if os.path.exists(dtm_csv_filename):
+            dtm_df = pandas.read_csv(dtm_csv_filename)
+        else:            
+            dtm_file = laspy.read(las_file_path)
+            dtm_record = dtm_file.points
+            dtm_header = dtm_file.header       
+            
+            dtm_df = pandas.DataFrame(dtm_record.array)
+            dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
+            dtm_df['Y'] = dtm_df['Y']*dtm_header.scales[1] + dtm_header.offsets[1]
+            dtm_df['Z'] = dtm_df['Z']*dtm_header.scales[2] + dtm_header.offsets[2]     
+            dtm_df.to_csv(dtm_csv_filename)
+            
         xy = dtm_df[["X","Y"]]
         tree = KDTree(xy,metric='l1')
         return dtm_df,tree
 
     def get_dataset(self):
-        file_tuple = random.choice(self.files_list)
-        dtm_df,tree = self.get_df_tree(file_tuple)
+        #file_tuple = random.choice(self.files_list)
+        file_tuple =  self.files_list[self.file_idx]
         
+        
+        dtm_df,tree = self.get_df_tree(file_tuple)
         center_idx = random.sample(range(len(dtm_df)),1)[0]
         center_point = dtm_df.iloc[center_idx][["X","Y"]]
         dist, tree_idx = tree.query([center_point], k=self.seq_len)
@@ -97,4 +102,6 @@ if __name__ == "__main__":
     dtm_data_stream = StreamingDTMDataset()
     for xyz in dtm_data_stream:
         tree = KDTree(xyz)
+        
+        
         
