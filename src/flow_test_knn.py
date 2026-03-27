@@ -12,6 +12,7 @@ import random
 import numpy as np
 import geopandas
 import pandas
+from sklearn.neighbors import NearestNeighbors, KDTree
 from config import *
 from misc_utilities import *
 from DTM_test_nn import *
@@ -52,27 +53,20 @@ class StreamingDTMDataset(IterableDataset):
     def get_df_tree(self,file_tuple):
         las_file_path, geometry,gdf_id = file_tuple
         #dtm_record,dtm_header = subset_with_geom(dtm_file_path,geometry)
-        #dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)
-       
+        #dsm_record,dsm_header = subset_with_geom(las_file_path,geometry)       
         dtm_file = laspy.read(las_file_path)
         dtm_record = dtm_file.points
-        dtm_header = dtm_file.header
-        
-        
+        dtm_header = dtm_file.header       
         
         dtm_df = pandas.DataFrame(dtm_record.array)
-      
-        
         dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
         dtm_df['Y'] = dtm_df['Y']*dtm_header.scales[1] + dtm_header.offsets[1]
         dtm_df['Z'] = dtm_df['Z']*dtm_header.scales[2] + dtm_header.offsets[2]       
      
      
         dtm_df.to_csv(os.path.join(debug_csv_dir,f"DTM_df_{gdf_id}.csv"))
-        xy = dtm_df[["X","Y"]]        
-        #tree = spatial.cKDTree(xy,copy_data=True,metric='l1')
+        xy = dtm_df[["X","Y"]]
         tree = KDTree(xy,metric='l1')
-        #breakpoint()
         return dtm_df,tree
 
     def get_dataset(self):
@@ -95,10 +89,12 @@ class StreamingDTMDataset(IterableDataset):
         for batch in batches:
             x = self.get_dataset()
             yield x
+            
 
 
 if __name__ == "__main__":
     '''test data'''
     dtm_data_stream = StreamingDTMDataset()
-    for x in dtm_data_stream:
-        pass
+    for xyz in dtm_data_stream:
+        tree = KDTree(xyz)
+        
