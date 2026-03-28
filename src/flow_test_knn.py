@@ -86,8 +86,8 @@ class StreamingDTMDataset:
     @lru_cache(maxsize=5)    
     def get_3dtree(self,file_tuple):
         dtm_df,tree,geometry = self.get_df_tree(file_tuple)
-        3d_tree = KDTree(dtm_df[self.selected_cols])
-        return 3d_tree,dtm_df
+        tree_3d = KDTree(dtm_df[self.selected_cols])
+        return tree_3d,dtm_df
             
             
 
@@ -145,8 +145,9 @@ if __name__ == "__main__":
     stream_list = [stream_points_df]
     for epoch in range(iterations):
         for file_tuple in dtm_data_stream.files_list:
-            3d_tree,dtm_df = dtm_data_stream.get_3dtree(file_tuple)    
-            dist, tree_idx = 3d_tree.query(stream_points_df[xyz_cols])
+            tree_3d,dtm_df = dtm_data_stream.get_3dtree(file_tuple)    
+            dist, tree_idx = tree_3d.query(stream_points_df[xyz_cols],k=10)
+            
             
                 
                 
