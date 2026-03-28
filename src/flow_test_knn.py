@@ -82,9 +82,14 @@ class StreamingDTMDataset:
         y_range = np.arange(miny,maxy,self.stride)
         selected_coords = list(filter(lambda x: geometry.contains(Point(x)), itertools.product(x_range, y_range)))
         return selected_coords
-        
-    def iter_patches(self):
-        
+    
+    @lru_cache(maxsize=5)    
+    def get_3dtree(self,file_tuple):
+        dtm_df,tree,geometry = self.get_df_tree(file_tuple)
+        3d_tree = KDTree(dtm_df[self.selected_cols])
+        return 3d_tree,dtm_df
+            
+            
 
     def get_dataset(self):
         #file_tuple = random.choice(self.files_list)
@@ -124,6 +129,7 @@ class StreamingDTMDataset:
 
 if __name__ == "__main__":
     '''test data'''
+    xyz_cols = ["X","Y","Z"]
     regular_samples_dir = os.path.join(debug_dir,"regular_samples")
     samples_per_scene = 100
     iterations = 100
@@ -133,9 +139,14 @@ if __name__ == "__main__":
     stream_points = []
     for xyz in dtm_data_stream:
         xyz_df = pandas.DataFrame(xyz,columns=dtm_data_stream.selected_cols)
-        #xyz_df.to_csv(os.path.join(regular_samples_dir,f"Regular_samples_{dtm_data_stream.file_idx}_{dtm_data_stream.sample_idx}.csv"),index=False)
-        #tree = KDTree(xyz)
         stream_points.append(xyz_df.sample(samples_per_scene))
         
-    stream_initial_points_df = pandas.concat(stream_points,ignore_index=True)
-    stream_    
+    stream_points_df = pandas.concat(stream_points,ignore_index=True)
+    stream_list = [stream_points_df]
+    for epoch in range(iterations):
+        for file_tuple in dtm_data_stream.files_list:
+            3d_tree,dtm_df = dtm_data_stream.get_3dtree(file_tuple)    
+            dist, tree_idx = 3d_tree.query(stream_points_df[xyz_cols])
+            
+                
+                
