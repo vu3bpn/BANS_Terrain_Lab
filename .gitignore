@@ -33,3 +33,7 @@ src/.ipynb_checkpoints/*
 *.vrt
 *.las
 *.laz
+doc/.~port_formta.docx
+*.log
+*.out
+*.synctex.gz

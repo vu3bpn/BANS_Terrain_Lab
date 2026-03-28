@@ -1,28 +1,112 @@
 \documentclass[12pt,a4paper]{article}
+\usepackage[a4paper, top=2.54cm, bottom=2.54cm,
+left=2.54cm, right=2.54cm,
+headheight=2.5cm]{geometry}
+\usepackage{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{fancyhdr}
+% Colors
+\usepackage{xcolor}
+\definecolor{darkred}{HTML}{CC0000}
+\definecolor{textdark}{HTML}{1F1F1F}
+
+% Graphics
 \usepackage{graphicx}
+\usepackage{float}
+
+% Header / Footer
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+% Layout helpers
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{ragged2e}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+
 \graphicspath{{figures/}}
 \pagestyle{fancy}
 \fancyhf{}
 
-\fancyhead[L]{\includegraphics[height=1cm]{logo1}}
-\fancyhead[R]{\includegraphics[height=1cm]{logo2}}
-\fancyhead[C]{\includegraphics[height=1cm]{logo3}}
+\fancyhead[L]{\includegraphics[height=1.2cm]{logo1}}
+\fancyhead[R]{\includegraphics[height=1.2cm]{logo2}}
+\fancyhead[C]{\includegraphics[height=1.2cm]{logo3}}
+
+% Optional: coloured lab name below the logos
+\fancyhead[L]{% override left with stacked logo + name
+	\begin{tabular}[b]{@{}l@{}}
+		\includegraphics[height=1.0cm]{logo1}\\[-2pt]
+		{\small\bfseries\color{darkred}Geo-Intel Lab}
+	\end{tabular}%
+}
+
+\fancyfoot[C]{\small Page \thepage\ of \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Plain style (title page — no header/footer)
+\fancypagestyle{plain}{
+	\fancyhf{}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}
+}
 
 
+% =============================================================
+% SECTION HEADING STYLES
+% =============================================================
+\titleformat{\section}
+{\normalfont\large\bfseries}
+{\thesection.}{0.6em}{}[]
 
+\titleformat{\subsection}
+{\normalfont\normalsize\bfseries}
+{\thesubsection.}{0.5em}{}
+
+
+%\titlespacing*{\section}{0pt}{1.2ex plus .5ex minus .2ex}{0.8ex plus .2ex}
+%\titlespacing*{\subsection}{0pt}{0.8ex plus .3ex minus .1ex}{0.4ex plus .1ex}
+
+% =============================================================
+% MISC
+% =============================================================
+\hypersetup{
+	colorlinks = true,
+	linkcolor  = darkred,
+	urlcolor   = darkred,
+	citecolor  = darkred
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+
+\newcommand{\team}{BANS TerrainLab}
+\newcommand{\projecttitle}{Networked AI Pipeline for Terrain Processing and Flow Simulation}
 \begin{document}
 	\input{sections/title_page}
 	\section{Title of the Idea}
+	\input{sections/title}
+	\section{Team  Name \& Affiliation}
+	\input{sections/team}
 	\section{Problem Statement Addressed}
+	\input{sections/problem}
 	\section{Proposed Solution}
+	\input{sections/solution}
 	\section{Uniqueness and Innovation}
+	\input{sections/uniqueness}
 	\section{Technology Stack / Methodology}
+	\input{sections/technology}
 	\section{Expected Impact (Environmental, Social, Economic, etc.)}
 	\section{Implementation Plan / Roadmap}
 	\section{Required Resources}
