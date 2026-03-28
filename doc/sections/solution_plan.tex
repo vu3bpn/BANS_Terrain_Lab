@@ -1,0 +1,28 @@
+\section{Solution plan}
+A redis server store the data that is being currently processed by any processing node
+
+key features:
+\begin{itemize}
+    \item Scalability: The architecture can easily scale by adding more processing nodes as needed, allowing for efficient handling of large datasets and complex computations.
+    \item \ac{SMRF} for DTM detection and Knn based imputation for unclassified points to simulate the plain terrain beneath the tree canopy (used for training vector generation).
+    \item Encoder-Decoder transformer architecture for DTM extraction, which can capture complex relationships between
+\end{itemize}
+
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\tikzstyle{block} =[ draw, text width = 4cm, minimum height=1.5cm, text badly centered, rounded corners, fill=blue!30, node distance = 3cm];
+        \node[block](server){Server / Data hosting};
+        \node[block, right of = server, node distance=5cm](redis){Redis keystore};
+        \node[block, below of = server](processing){Processing Nodes};
+        \node[block] at ($(processing)-(0.1,0.1)$) {Processing Nodes};
+        \node[block] at ($(processing)-(0.2,0.2)$) (pn3) {Processing Nodes};
+
+        \draw[->,thick](server) -- (processing);
+        \draw[<->,thick](processing) -| (redis);
+
+    \end{tikzpicture}
+	\caption{Scalable architecture}
+	\label{fig:Scaling plan}
+\end{figure}

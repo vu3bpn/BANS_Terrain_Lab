@@ -3,6 +3,8 @@ name: geoai
 
 channels: 
    - conda-forge
+   - nvidia
+   - pytorch
    - defaults
 
 dependencies:
@@ -17,5 +19,16 @@ dependencies:
   - seaborn
   - laspy
   - pytorch
+  - torchvision
+  - torchinfo
+  - onnx
+  - onnxscript
+  - pytorch-cuda=12.2
   - xgboost
   - pyproj
+  - geopandas
+  - tqdm
+  - scikit-learn
+  - pip
+  - pip:
+    - tensorflow[and-cuda]
