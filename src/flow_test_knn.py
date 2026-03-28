@@ -131,8 +131,9 @@ if __name__ == "__main__":
     '''test data'''
     xyz_cols = ["X","Y","Z"]
     regular_samples_dir = os.path.join(debug_dir,"regular_samples")
+    stream_samples_dir = os.path.join(debug_dir,"stream_samples")
     samples_per_scene = 100
-    iterations = 100
+    iterations = 5
     rain = 0.01
     dtm_data_stream = StreamingDTMDataset()
     print(len(dtm_data_stream))
@@ -145,17 +146,19 @@ if __name__ == "__main__":
     stream_list = [stream_points_df]
     for epoch in range(iterations):
         for file_tuple in dtm_data_stream.files_list:
+            las_file_path, geometry,gdf_id = file_tuple
             tree_3d,dtm_df = dtm_data_stream.get_3dtree(file_tuple)    
             dist, tree_idx = tree_3d.query(stream_points_df[xyz_cols],k=10)
-            def get_lowest_neighbor(tree_idx):
-                neighbors = dtm_df.iloc[tree_idx]
+            def get_lowest_neighbor(tree_idx1):
+                neighbors = dtm_df.iloc[tree_idx1]
                 lowest_neighbor = neighbors.loc[neighbors['Z'].idxmin()]
-                return lowest_neighbor
-                
+                return lowest_neighbor                
             lowest_neighbors = list(map(get_lowest_neighbor,tree_idx))   
             lowest_neighbors_df = pandas.DataFrame(lowest_neighbors)
             stream_list.append(lowest_neighbors_df) 
-            stream_points_df = lowest_neighbors_df   
+            stream_points_df = lowest_neighbors_df  
+            stream_points_df.to_csv(os.path.join(stream_samples_dir,f"Stream_points_{gdf_id}_{epoch}.csv"),index=False)
+            print(".",end="")
             
                 
                 
