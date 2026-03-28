@@ -1,0 +1,201 @@
+% ============================================================
+%  AI/ML Hackathon – Ministry of Panchayati Raj
+%  Geospatial Intelligence Challenge – Submission Template
+%  Powered by: Geo-Intel Lab, IITTNiF
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ── Packages ────────────────────────────────────────────────
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm,
+left=2.5cm, right=2.5cm]{geometry}
+\usepackage{graphicx}          % logos / images
+\usepackage{xcolor}            % custom colours
+\usepackage{fontenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{titlesec}          % section heading styles
+\usepackage{parskip}           % space between paragraphs
+\usepackage{fancyhdr}          % header / footer
+\usepackage{hyperref}          % clickable links
+\usepackage{ifthen}
+\usepackage{array}
+\usepackage{booktabs}
+
+% ── Colours (matching original) ─────────────────────────────
+\definecolor{darkred}{RGB}{139, 0,   0}   % IIT-red for "Geo"
+\definecolor{crimson}{RGB}{180, 20,  20}  % "Intel" red
+\definecolor{darkblue}{RGB}{0,   0, 139}  % "Lab" blue
+
+% ── Hyperlink colours ────────────────────────────────────────
+\hypersetup{
+	colorlinks = true,
+	urlcolor   = darkblue,
+	linkcolor  = black,
+	citecolor  = black
+}
+
+% ── Header / Footer ─────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Three logos in header (replace paths with actual logo files)
+\fancyhead[L]{%
+	\includegraphics[height=1.2cm]{figures/logo1}%   IIT Tirupati Navavishkār I-Hub Foundation + Geo-Intel Lab
+}
+\fancyhead[C]{%
+	\includegraphics[height=1.2cm]{figures/logo3}%    Ministry / event centre logo
+}
+\fancyhead[R]{%
+	\includegraphics[height=1.2cm]{figures/logo2}%  TIRUPATI emblem
+}
+
+\fancyfoot[C]{\thepage}
+
+% ── Section heading style (bold, no numbering prefix) ───────
+\titleformat{\section}[hang]
+{\normalfont\fontsize{12}{14}\bfseries}
+{}{}{}
+\titlespacing{\section}{0pt}{12pt}{4pt}
+
+% ── Helper: coloured "Geo·Intel·Lab" string ─────────────────
+\newcommand{\GeoIntelLab}{%
+	{\color{darkred}\textbf{Geo}}%
+	{\color{black}\textbf{spatial }}%
+	{\color{darkred}\textbf{Intel}}%
+	{\color{black}\textbf{ligence and Applications }}%
+	{\color{darkred}\textbf{Lab}}%
+	{\color{black}\textbf{oratory}}%
+}
+
+% ============================================================
+\begin{document}
+	
+	% ── Cover / Title Page ──────────────────────────────────────
+	\thispagestyle{fancy}          % show header on first page too
+	\vspace*{1.5cm}
+	
+	{\centering
+		{\LARGE\bfseries AI/ML Hackathon – Ministry of Panchayati Raj\\[4pt]
+			(Geospatial Intelligence Challenge)}\par
+		\vspace{6pt}
+		{\large\itshape Powered by:\ %
+			{\color{crimson}\bfseries Geo-Intel Lab, IITTNiF}}\par
+		\vspace{1.8cm}
+		
+		{\large\bfseries Problem Statement Addressed}\par
+		\vspace{0.5cm}
+		{\large\bfseries Project Title}\par
+		\vspace{0.5cm}
+		{\normalsize\bfseries Name}\par   % author / team name
+		\vspace{4cm}
+		
+		{\large\bfseries Institution/Organization Name}\par
+		\vspace{4cm}
+		
+		{\normalfont Supported by}\par
+		\vspace{4pt}
+		{\large\bfseries \GeoIntelLab,\\[2pt]
+			IIT Tirupati Navavishkar I-Hub Foundation}\par
+	}
+	
+	\newpage
+	
+	% ============================================================
+	%  SECTIONS  (fill in your content below each heading)
+	% ============================================================
+	
+	% ── 1. Title of the Idea ────────────────────────────────────
+	\section*{\textbf{1. Title of the Idea}}
+	\textit{Word Limit: Max 15 words}\\
+	A crisp, descriptive title.
+	
+	\vspace{0.8cm}
+	
+	% ── 2. Team / Individual Name & Affiliation ─────────────────
+	\section*{\textbf{2. Team/Individual Name \& Affiliation}}
+	\textit{Word Limit: Max 50 words}\\
+	Names, institution/company/startup, contact details.
+	
+	\vspace{0.8cm}
+	
+	% ── 3. Problem Statement Addressed ──────────────────────────
+	\section*{\textbf{3. Problem Statement Addressed}}
+	\textit{Word Limit: 100–150 words}\\
+	Clearly define the air quality issue being tackled.
+	
+	\vspace{0.8cm}
+	
+	% ── 4. Proposed Solution ────────────────────────────────────
+	\section*{\textbf{4. Proposed Solution}}
+	\textit{Word Limit: 200–250 words}\\
+	Describe the core idea and how it addresses the problem.
+	
+	\vspace{0.8cm}
+	
+	% ── 5. Uniqueness and Innovation ────────────────────────────
+	\section*{\textbf{5. Uniqueness and Innovation}}
+	\textit{Word Limit: 150–200 words}\\
+	What makes your idea novel or different from existing solutions?
+	
+	\vspace{0.8cm}
+	
+	% ── 6. Technology Stack / Methodology ───────────────────────
+	\section*{\textbf{6. Technology Stack / Methodology}}
+	\textit{Word Limit: 150–200 words}\\
+	Outline tools, technologies, techniques, or scientific methods used.
+	
+	\vspace{0.8cm}
+	
+	% ── 7. Expected Impact ──────────────────────────────────────
+	\section*{\textbf{7. Expected Impact (Environmental, Social, Economic, etc.)}}
+	\textit{Word Limit: 100–150 words}\\
+	Describe potential measurable outcomes and benefits.
+	
+	\vspace{0.8cm}
+	
+	% ── 8. Implementation Plan / Roadmap ────────────────────────
+	\section*{\textbf{8. Implementation Plan / Roadmap}}
+	\textit{Word Limit: 150–200 words}\\
+	Step-by-step execution approach over 3–12 months.
+	
+	\vspace{0.8cm}
+	
+	% ── 9. Required Resources ───────────────────────────────────
+	\section*{\textbf{9. Required Resources}}
+	\textit{Word Limit: 100–150 words}\\
+	Mention infrastructure, tools, or expertise needed.
+	
+	\vspace{0.8cm}
+	
+	% ── 10. Scalability and Sustainability ──────────────────────
+	\section*{\textbf{10. Scalability and Sustainability}}
+	\textit{Word Limit: 100–150 words}\\
+	Can this be expanded across regions or sectors? Is it sustainable long-term?
+	
+	\vspace{0.8cm}
+	
+	% ── 11. Stakeholders and Collaborations ─────────────────────
+	\section*{\textbf{11. Stakeholders and Collaborations (if any)}}
+	\textit{Word Limit: 100–150 words}\\
+	Mention government bodies, industry partners, communities, etc.
+	
+	\vspace{0.8cm}
+	
+	% ── 12. Current Stage of Development ────────────────────────
+	\section*{\textbf{12. Current Stage of Development}}
+	\textit{Word Limit: Choose one and elaborate in 50–100 words}\\
+	Idea / Concept $|$ Prototype $|$ MVP $|$ Piloted $|$ Deployed
+	
+	\vspace{0.8cm}
+	
+	% ── 13. Supporting Materials (Optional) ─────────────────────
+	\section*{\textbf{13. Supporting Materials (Optional)}}
+	No word limit — allow uploads or links to diagrams, pitch decks, demo
+	videos, GitHub, etc.
+	
+	% ============================================================
+\end{document}
