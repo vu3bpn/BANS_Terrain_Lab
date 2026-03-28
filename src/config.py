@@ -19,7 +19,7 @@ copc_dir = os.path.join(input_dir,"copc")
 output_dir = os.path.join(data_dir,"output")
 vector_dir = os.path.join(input_dir,"vectors")
 model_dir = os.path.join(output_dir,"models")
-
+regular_samples_dir = os.path.join(debug_dir,"regular_samples")
 
 
 #%% Input files
@@ -68,7 +68,8 @@ required_dirs = [
         fixed_window_subset_dir,
         split_files_subset_dir,
         output_dir,
-        model_dir
+        model_dir,
+        regular_samples_dir
         ]
     
 for dir1 in required_dirs:
