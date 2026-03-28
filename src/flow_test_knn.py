@@ -66,17 +66,19 @@ class StreamingDTMDataset(IterableDataset):
             dtm_df['X'] = dtm_df['X']*dtm_header.scales[0] + dtm_header.offsets[0]
             dtm_df['Y'] = dtm_df['Y']*dtm_header.scales[1] + dtm_header.offsets[1]
             dtm_df['Z'] = dtm_df['Z']*dtm_header.scales[2] + dtm_header.offsets[2]     
-            dtm_df.to_csv(dtm_csv_filename)
-            
+            dtm_df.to_csv(dtm_csv_filename)            
         xy = dtm_df[["X","Y"]]
         tree = KDTree(xy,metric='l1')
         return dtm_df,tree
 
+
+    def systematic_samples(self,geometry):
+        
+        
+
     def get_dataset(self):
         #file_tuple = random.choice(self.files_list)
-        file_tuple =  self.files_list[self.file_idx]
-        
-        
+        file_tuple =  self.files_list[self.file_idx]        
         dtm_df,tree = self.get_df_tree(file_tuple)
         center_idx = random.sample(range(len(dtm_df)),1)[0]
         center_point = dtm_df.iloc[center_idx][["X","Y"]]
@@ -102,6 +104,7 @@ if __name__ == "__main__":
     dtm_data_stream = StreamingDTMDataset()
     for xyz in dtm_data_stream:
         tree = KDTree(xyz)
+        
         
         
         
