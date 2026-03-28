@@ -147,7 +147,15 @@ if __name__ == "__main__":
         for file_tuple in dtm_data_stream.files_list:
             tree_3d,dtm_df = dtm_data_stream.get_3dtree(file_tuple)    
             dist, tree_idx = tree_3d.query(stream_points_df[xyz_cols],k=10)
-            
+            def get_lowest_neighbor(tree_idx):
+                neighbors = dtm_df.iloc[tree_idx]
+                lowest_neighbor = neighbors.loc[neighbors['Z'].idxmin()]
+                return lowest_neighbor
+                
+            lowest_neighbors = list(map(get_lowest_neighbor,tree_idx))   
+            lowest_neighbors_df = pandas.DataFrame(lowest_neighbors)
+            stream_list.append(lowest_neighbors_df) 
+            stream_points_df = lowest_neighbors_df   
             
                 
                 
