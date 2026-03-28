@@ -4,10 +4,10 @@ import rasterio
 from rasterio.windows import Window
 from pathlib import Path
 
-input_file_path  = '/home/ajai-krishna/work/GEO_AI/outputs/subsets/gujarath_dtm_RGB.tif'
+input_file_path  = '/home/ajai-krishna/work/GEO_AI/outputs/subsets/gujarath_dtm_RGBZ.tif'
 output_file_path = '/home/ajai-krishna/work/GEO_AI/outputs/gujarath_dtm_RGBZ_filled.tif'  # ← filename added
 
-def fill_nodata_knn_chunkwise(input_tif, output_tif, chunk_size=512, k=12, overlap=64):
+def fill_nodata_knn_chunkwise(input_tif, output_tif, chunk_size=1024, k=12, overlap=64):
 
     with rasterio.open(input_tif) as src:
         H       = src.height
@@ -150,5 +150,5 @@ def fill_nodata_knn_chunkwise(input_tif, output_tif, chunk_size=512, k=12, overl
     print(f"Chunks processed : {chunk_id}")
     print(f"Output saved to  : {output_tif}")
     
-    
-fill_nodata_knn_chunkwise(input_file_path,output_file_path)
+if __name__ == "__main__":
+    fill_nodata_knn_chunkwise(input_file_path,output_file_path)
