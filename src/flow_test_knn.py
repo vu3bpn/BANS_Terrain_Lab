@@ -12,7 +12,9 @@ import random
 import numpy as np
 import geopandas
 import pandas
+from shapely.geometry import Point
 from sklearn.neighbors import NearestNeighbors, KDTree
+import itertools
 from config import *
 from misc_utilities import *
 from DTM_test_nn import *
@@ -22,13 +24,14 @@ class StreamingDTMDataset(IterableDataset):
     def __init__(self,batch_size = 64,n_batches = 32,seq_len = 1024):
         super().__init__()
         self.batch_size = batch_size
-        self.n_batches = n_batches
+        self.n_batches = 0
         self.seq_len = seq_len
         self.files_list = []
         self.selected_cols = ["X","Y","Z"]  
-        self.read_files()
         self.file_idx = 0
-
+        self.sample_idx  = 0
+        self.stride = 0.1
+        self.read_files()
 
     def read_files(self):
         data_info_df = pandas.read_csv(data_info_file)
@@ -46,6 +49,7 @@ class StreamingDTMDataset(IterableDataset):
                 geometry = row1[1].geometry                
                 input_file_path = os.path.join(debug_dir,f"dtm_debug_{las_file_name}_id_{gdf_id}.las")
                 self.files_list.append((input_file_path,geometry,gdf_id))
+                self.n_batches += len(self.systematic_samples(geometry))
 
     def __len__(self):
         return self.n_batches
@@ -69,20 +73,37 @@ class StreamingDTMDataset(IterableDataset):
             dtm_df.to_csv(dtm_csv_filename)            
         xy = dtm_df[["X","Y"]]
         tree = KDTree(xy,metric='l1')
-        return dtm_df,tree
+        return dtm_df,tree,geometry
 
-
+    @lru_cache(maxsize=5)
     def systematic_samples(self,geometry):
-        
+        minx,miny,maxx,maxy = geometry.bounds
+        x_range = np.arange(minx,maxx,self.stride)
+        y_range = np.arange(miny,maxy,self.stride)
+        selected_coords = list(filter(lambda x: geometry.contains(Point(x)), itertools.product(x_range, y_range)))
+        return selected_coords
         
 
     def get_dataset(self):
         #file_tuple = random.choice(self.files_list)
-        file_tuple =  self.files_list[self.file_idx]        
-        dtm_df,tree = self.get_df_tree(file_tuple)
-        center_idx = random.sample(range(len(dtm_df)),1)[0]
-        center_point = dtm_df.iloc[center_idx][["X","Y"]]
-        dist, tree_idx = tree.query([center_point], k=self.seq_len)
+        file_tuple =  self.files_list[self.file_idx]
+        dtm_df,tree,geometry = self.get_df_tree(file_tuple)
+        #center_idx = random.sample(range(len(dtm_df)),1)[0]
+            #center_point = dtm_df.iloc[center_idx][["X","Y"]]
+        center_coords = self.systematic_samples(geometry)
+        if self.sample_idx < len(center_coords):
+            selected_coords = center_coords[self.sample_idx]
+            self.sample_idx += 1
+        else:
+            self.sample_idx = 0
+            self.file_idx += 1
+            if self.file_idx >= len(self.files_list):
+                self.file_idx = 0
+            center_coords = self.systematic_samples(geometry)
+            selected_coords = center_coords[self.sample_idx]
+            self.sample_idx += 1
+
+        dist, tree_idx = tree.query([selected_coords], k=self.seq_len)
         tree_idx = tree_idx.flatten()        
        
         dtm_data =  dtm_df.iloc[tree_idx]           
@@ -101,10 +122,9 @@ class StreamingDTMDataset(IterableDataset):
 
 if __name__ == "__main__":
     '''test data'''
+    rain = 0.01
     dtm_data_stream = StreamingDTMDataset()
     for xyz in dtm_data_stream:
+        xyz_df = pandas.DataFrame(xyz,columns=dtm_data_stream.selected_cols)
+        xyz_df.to_csv(os.path.join(debug_csv_dir,f"Regular_samples_{dtm_data_stream.file_idx}_{dtm_data_stream.sample_idx}.csv"),index=False)
         tree = KDTree(xyz)
-        
-        
-        
-        
