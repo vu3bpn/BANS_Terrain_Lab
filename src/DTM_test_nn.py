@@ -448,6 +448,7 @@ if __name__ == "__main__":
         d_ff=8,
         dropout=0.1,
         )
+    summary(model, input_size=(1, 1024, 7))
     
     
 
