@@ -33,3 +33,4 @@ src/.ipynb_checkpoints/*
 *.vrt
 *.las
 *.laz
+*.out
