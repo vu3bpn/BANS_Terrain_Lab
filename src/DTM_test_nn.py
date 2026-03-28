@@ -442,8 +442,8 @@ if __name__ == "__main__":
     model = Transformer7D(
         input_dim=7,
         output_dim=1,
-        d_model=64,
-        n_heads=32,
+        d_model=8,
+        n_heads=8,
         n_layers=2,
         d_ff=8,
         dropout=0.1,
