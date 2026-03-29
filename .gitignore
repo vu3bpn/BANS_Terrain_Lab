@@ -10,3 +10,7 @@ doc/geoai.fls
 *.toc
 *.bbl
 *.blg
+*.out
+*.docx
+*.log
+*.synctex.gz
