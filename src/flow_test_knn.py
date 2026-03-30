@@ -15,6 +15,7 @@ import pandas
 from shapely.geometry import Point
 from sklearn.neighbors import NearestNeighbors, KDTree
 import itertools
+from copy import deepcopy
 from config import *
 from misc_utilities import *
 from DTM_test_nn import *
@@ -133,32 +134,38 @@ if __name__ == "__main__":
     regular_samples_dir = os.path.join(debug_dir,"regular_samples")
     stream_samples_dir = os.path.join(debug_dir,"stream_samples")
     samples_per_scene = 100
-    iterations = 5
+    iterations = 1001
+    flow_search_radius = 10
     rain = 0.01
     dtm_data_stream = StreamingDTMDataset()
+    dtm_data_stream.n_batches = 4
     print(len(dtm_data_stream))
-    stream_points = []
+    stream_points = []    
     for xyz in dtm_data_stream:
         xyz_df = pandas.DataFrame(xyz,columns=dtm_data_stream.selected_cols)
         stream_points.append(xyz_df.sample(samples_per_scene))
         
     stream_points_df = pandas.concat(stream_points,ignore_index=True)
     stream_list = [stream_points_df]
-    for epoch in range(iterations):
-        for file_tuple in dtm_data_stream.files_list:
+    
+    for file_tuple in dtm_data_stream.files_list:
+        for epoch in range(iterations):
             las_file_path, geometry,gdf_id = file_tuple
             tree_3d,dtm_df = dtm_data_stream.get_3dtree(file_tuple)    
-            dist, tree_idx = tree_3d.query(stream_points_df[xyz_cols],k=10)
+            dist, tree_idx = tree_3d.query(stream_points_df[xyz_cols],k=flow_search_radius+epoch)            
             def get_lowest_neighbor(tree_idx1):
                 neighbors = dtm_df.iloc[tree_idx1]
                 lowest_neighbor = neighbors.loc[neighbors['Z'].idxmin()]
-                return lowest_neighbor                
+                return lowest_neighbor            
             lowest_neighbors = list(map(get_lowest_neighbor,tree_idx))   
-            lowest_neighbors_df = pandas.DataFrame(lowest_neighbors)
-            stream_list.append(lowest_neighbors_df) 
-            stream_points_df = lowest_neighbors_df  
-            stream_points_df.to_csv(os.path.join(stream_samples_dir,f"Stream_points_{gdf_id}_{epoch}.csv"),index=False)
-            print(".",end="")
+            lowest_neighbors_df = pandas.DataFrame(lowest_neighbors)[xyz_cols]
+            stream_list.append(lowest_neighbors_df)
+            
+            if epoch%(iterations//5) == 0:
+                stream_points_df.to_csv(os.path.join(stream_samples_dir,f"Stream_points_{gdf_id}_{epoch}.csv"),index=False)
+            stream_points_df = deepcopy(lowest_neighbors_df[xyz_cols])  
+            
+            
             
                 
                 
