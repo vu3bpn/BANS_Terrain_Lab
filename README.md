@@ -1,4 +1,4 @@
-# Geo_AI
+# BANS Terrain Labs
 
 A platform for applying AI to solve geographical problems.
 
