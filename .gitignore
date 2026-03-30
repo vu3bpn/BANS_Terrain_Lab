@@ -37,3 +37,6 @@ doc/.~port_formta.docx
 *.log
 *.out
 *.synctex.gz
+doc/figures/logo1.png
+doc/figures/logo2.png
+doc/figures/logo3.jpg
