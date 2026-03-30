@@ -1,0 +1,34 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{subcaption}
+\usepackage[printonlyused]{acronym}
+\graphicspath{{figures/}}
+\usetikzlibrary{calc}
+\title{GEOAI, Drainage planning from Pointcloud data using AI \\[0.4em] \large Technical report}
+\author{Team: Bipin C, Ajai, Noor, Soumyarajan}
+
+
+\input{abbrevations}
+\begin{document}
+	\maketitle
+	\newpage
+	\tableofcontents
+	\newpage	
+
+	\input{sections/problem}	
+	\input{sections/solution_plan}	
+	\input{sections/dtm_extraction}
+	\input{sections/surface_water_flow_estimation}	
+	\input{sections/application}
+	\bibliography{ref.bib}
+	\bibliographystyle{ieeetr}
+	%\printbibliography
+	
+\end{document}
+	
